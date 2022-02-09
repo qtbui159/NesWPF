@@ -1,6 +1,6 @@
 ﻿using NesLib.Cartridge;
-using NesLib.IO;
 using NesLib.Memory;
+using NesLib.PPU;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,7 +13,7 @@ namespace NesLib.Bus
     {
         private IRAM m_RAM;
         private ICartridge m_Cartridge;
-        private IIORegister m_IORegister;
+        private IPPU2C02 m_PPU;
 
         public void ConnectRAM(IRAM ram)
         {
@@ -25,9 +25,9 @@ namespace NesLib.Bus
             m_Cartridge = cartridge;
         }
 
-        public void ConnectIORegister(IIORegister io)
+        public void ConnectPPU(IPPU2C02 ppu)
         {
-            m_IORegister = io;
+            m_PPU = ppu;
         }
 
         public byte ReadByte(ushort addr)
@@ -38,7 +38,59 @@ namespace NesLib.Bus
             }
             else if (addr >= 0x2000 && addr < 0x4020)
             {
-                return m_IORegister.ReadByte(addr);
+                addr = GetIORegisterRealAddr(addr);
+                if (addr == 0x2000)
+                {
+                    throw new Exception("该地址不支持读取");
+                }
+                else if (addr == 0x2001)
+                {
+                    throw new Exception("该地址不支持读取");
+                }
+                else if (addr == 0x2002)
+                {
+                    // 读取后会清除VBlank状态
+                    byte data= m_PPU.STATUS.Value;
+                    m_PPU.STATUS.V = 0;
+                    return data;
+                }
+                else if (addr == 0x2003)
+                {
+                    throw new Exception("该地址不支持读取");
+                }
+                else if (addr == 0x2004)
+                {
+                    return m_PPU.OAM[m_PPU.OAMAddr++];
+                }
+                else if (addr == 0x2005)
+                {
+                    throw new Exception("该地址不支持读取");
+                }
+                else if (addr == 0x2006)
+                {
+                    throw new Exception("该地址不支持读取");
+                }
+                else if (addr == 0x2007)
+                {
+                    m_PPU.ReadByte(m_PPU.Addr);
+
+                    if (m_PPU.CTRL.I == 1)
+                    {
+                        m_PPU.Addr += 32;
+                    }
+                    else
+                    {
+                        m_PPU.Addr += 1;
+                    }
+                }
+                else if (addr == 0x4014)
+                {
+                    throw new Exception("该地址不支持读取");
+                }
+                else
+                {
+
+                }
             }
             else if (addr >= 0x6000)
             {
@@ -55,6 +107,10 @@ namespace NesLib.Bus
             if (addr < 0x2000)
             {
                 return m_RAM.ReadWord(addr);
+            }
+            else if (addr >= 0x2000 && addr < 0x4020)
+            {
+                throw new Exception("不支持的地址");
             }
             else if (addr >= 0x6000)
             {
@@ -74,7 +130,55 @@ namespace NesLib.Bus
             }
             else if (addr >= 0x2000 && addr < 0x4020)
             {
-                m_IORegister.WriteByte(addr, data);
+                addr = GetIORegisterRealAddr(addr);
+                if (addr == 0x2000)
+                {
+                    m_PPU.CTRL.SetValue(data);
+                }
+                else if (addr == 0x2001)
+                {
+                    m_PPU.MASK.SetValue(data);
+                }
+                else if (addr == 0x2002)
+                {
+                    throw new Exception("该地址不支持写入");
+                }
+                else if (addr == 0x2003)
+                {
+                    m_PPU.OAMAddr = data;
+                }
+                else if (addr == 0x2004)
+                {
+                }
+                else if (addr == 0x2005)
+                {
+                    throw new Exception("该地址不支持读取");
+                }
+                else if (addr == 0x2006)
+                {
+                    throw new Exception("该地址不支持读取");
+                }
+                else if (addr == 0x2007)
+                {
+                    m_PPU.ReadByte(m_PPU.Addr);
+
+                    if (m_PPU.CTRL.I == 1)
+                    {
+                        m_PPU.Addr += 32;
+                    }
+                    else
+                    {
+                        m_PPU.Addr += 1;
+                    }
+                }
+                else if (addr == 0x4014)
+                {
+                    throw new Exception("该地址不支持读取");
+                }
+                else
+                {
+
+                }
             }
             else if (addr >= 0x6000)
             {
@@ -92,6 +196,10 @@ namespace NesLib.Bus
             {
                 m_RAM.WriteWord(addr, data);
             }
+            else if (addr >= 0x2000 && addr < 0x4020)
+            {
+                throw new Exception("不支持的地址");
+            }
             else if (addr >= 0x6000)
             {
                 m_Cartridge.Mapper.WriteWord(addr, data);
@@ -100,6 +208,11 @@ namespace NesLib.Bus
             { 
                 throw new Exception("不支持的地址");
             }
+        }
+
+        private ushort GetIORegisterRealAddr(ushort addr)
+        {
+            return (ushort)(addr & 0x2007);
         }
     }
 }

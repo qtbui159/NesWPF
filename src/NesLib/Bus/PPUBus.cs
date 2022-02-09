@@ -28,10 +28,11 @@ namespace NesLib.Bus
             addr = GetRealAddr(addr);
             if (addr < 0x2000)
             {
-                return m_Cartridge.PRGRom[addr];
+                return m_Cartridge.CHRRom[addr];
             }
             else if (addr >= 0x2000 && addr < 0x3F00)
             {
+                
             }
             else if (addr >= 0x3F00 && addr < 0x4000)
             {
@@ -49,7 +50,7 @@ namespace NesLib.Bus
             addr = GetRealAddr(addr);
             if (addr < 0x2000)
             {
-                return m_Cartridge.PRGRom[addr];
+                return m_Cartridge.CHRRom[addr];
             }
             else if (addr >= 0x2000 && addr < 0x3F00)
             {

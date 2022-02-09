@@ -1,7 +1,7 @@
 ﻿using NesLib.Cartridge;
 using NesLib.Common;
-using NesLib.IO;
 using NesLib.Memory;
+using NesLib.PPU;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,6 +14,6 @@ namespace NesLib.Bus
     {
         void ConnectRAM(IRAM ram);
         void ConnectCartridge(ICartridge cartidge);
-        void ConnectIORegister(IIORegister io);
+        void ConnectPPU(IPPU2C02 ppu);
     }
 }

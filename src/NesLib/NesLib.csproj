@@ -44,7 +44,6 @@
     <Compile Include="Bus\CPUBus.cs" />
     <Compile Include="Bus\ICPUBus.cs" />
     <Compile Include="Bus\IPPUBus.cs" />
-    <Compile Include="Bus\PPUBus.cs" />
     <Compile Include="Cartridge\Cartridge.cs" />
     <Compile Include="Cartridge\ICartridge.cs" />
     <Compile Include="Cartridge\Mapper\IMapper.cs" />
@@ -64,7 +63,12 @@
     <Compile Include="NesFactory.cs" />
     <Compile Include="NesFile\IFileLoader.cs" />
     <Compile Include="NesFile\Nes10FileLoader.cs" />
-    <Compile Include="PPU\IPPU.cs" />
+    <Compile Include="Bus\PPUBus.cs" />
+    <Compile Include="PPU\CTRLRegister.cs" />
+    <Compile Include="PPU\IPPU2C02.cs" />
+    <Compile Include="PPU\MASKRegister.cs" />
+    <Compile Include="PPU\PPU2C02.cs" />
+    <Compile Include="PPU\STATUSRegister.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

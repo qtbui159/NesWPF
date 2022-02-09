@@ -12,6 +12,7 @@ using Utils;
 //2*)http://users.telenet.be/kim1-6502/6502/proman.html
 //3*)https://wiki.nesdev.org/w/index.php?title=CPU_unofficial_opcodes
 //4*)https://wiki.nesdev.org/w/index.php?title=Programming_with_unofficial_opcodes
+//5*)https://wiki.nesdev.org/w/index.php?title=CPU_power_up_state
 
 namespace NesLib.CPU
 {
