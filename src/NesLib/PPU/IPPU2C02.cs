@@ -33,5 +33,10 @@ namespace NesLib.PPU
         /// Object Attribute Memory地址
         /// </summary>
         byte OAMAddr { get; set; }
+
+        /// <summary>
+        /// 双写操作，初始化为false
+        /// </summary>
+        bool WriteX2Flag { get; set; }
     }
 }

@@ -7,6 +7,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+/**
+ * 参考资料
+ * 1*)https://wiki.nesdev.org/w/index.php?title=PPU_registers#PPUSCROLL
+ * 2*)https://wiki.nesdev.org/w/index.php?title=PPU_registers#Address_.28.242006.29_.3E.3E_write_x2
+ */
 namespace NesLib.Bus
 {
     class CPUBus : ICPUBus
@@ -72,7 +77,7 @@ namespace NesLib.Bus
                 }
                 else if (addr == 0x2007)
                 {
-                    m_PPU.ReadByte(m_PPU.Addr);
+                    byte data = m_PPU.ReadByte(m_PPU.Addr);
 
                     if (m_PPU.CTRL.I == 1)
                     {
@@ -82,6 +87,7 @@ namespace NesLib.Bus
                     {
                         m_PPU.Addr += 1;
                     }
+                    return data;
                 }
                 else if (addr == 0x4014)
                 {
@@ -89,7 +95,7 @@ namespace NesLib.Bus
                 }
                 else
                 {
-
+                    throw new Exception("该地址不支持读取");
                 }
             }
             else if (addr >= 0x6000)
@@ -149,18 +155,47 @@ namespace NesLib.Bus
                 }
                 else if (addr == 0x2004)
                 {
+                    m_PPU.OAM[m_PPU.OAMAddr++] = data;
                 }
                 else if (addr == 0x2005)
                 {
-                    throw new Exception("该地址不支持读取");
+                    //双写操作，参考资料1*)
+                    if (m_PPU.WriteX2Flag)
+                    {
+                        //二写
+                    }
+                    else
+                    {
+                        //一写
+                    }
+
+                    m_PPU.WriteX2Flag = !m_PPU.WriteX2Flag;
                 }
                 else if (addr == 0x2006)
                 {
-                    throw new Exception("该地址不支持读取");
+                    //双写操作，参考资料2*)
+                    if (m_PPU.WriteX2Flag)
+                    {
+                        //二写，再写低位
+                        ushort tmpAddr = m_PPU.Addr;
+                        tmpAddr = (ushort)(tmpAddr & 0xFF00);
+                        tmpAddr = (ushort)(tmpAddr | data);
+                        m_PPU.Addr = tmpAddr;
+                    }
+                    else
+                    {
+                        //一写，先写高位
+                        ushort tmpAddr = m_PPU.Addr;
+                        tmpAddr = (ushort)(tmpAddr & 0x00FF);
+                        tmpAddr = (ushort)((data << 8) | tmpAddr);
+                        m_PPU.Addr = tmpAddr;
+                    }
+
+                    m_PPU.WriteX2Flag = !m_PPU.WriteX2Flag;
                 }
                 else if (addr == 0x2007)
                 {
-                    m_PPU.ReadByte(m_PPU.Addr);
+                    m_PPU.WriteByte(addr, data);
 
                     if (m_PPU.CTRL.I == 1)
                     {
@@ -173,7 +208,17 @@ namespace NesLib.Bus
                 }
                 else if (addr == 0x4014)
                 {
-                    throw new Exception("该地址不支持读取");
+                    ushort startAddr = (ushort)(data << 8);
+                    ushort endAddr = (ushort)(startAddr | 0xFF);
+                    List<byte> dataList = new List<byte>();
+                    for (ushort i = startAddr; i < endAddr; ++i)
+                    {
+                        byte b = ReadByte(i);
+                        dataList.Add(b);
+                    }
+                    byte[] tmpData = dataList.ToArray();
+
+                    Array.Copy(tmpData, m_PPU.OAM, tmpData.Length);
                 }
                 else
                 {

@@ -30,7 +30,7 @@ namespace NesLib
             m_CPU6502 = new CPU6502(m_CPUBus);
             m_RAM = new RAM();
             m_PPUBus = new PPUBus();
-            m_PPU2C02 = new PPU2C02();
+            m_PPU2C02 = new PPU2C02(m_PPUBus);
             m_VRAM = new VRAM();
         }
 
@@ -45,7 +45,8 @@ namespace NesLib
         public void PowerUp()
         {
             m_CPUBus.ConnectRAM(m_RAM);
-            m_CPUBus.ConnectPPUBus(m_PPUBus);
+            m_CPUBus.ConnectPPU(m_PPU2C02);
+            m_PPUBus.ConnectVRAM(m_VRAM);
 
             m_CPU6502.RESET();
             while (true)
