@@ -22,6 +22,7 @@ namespace NesLib
         private readonly IPPUBus m_PPUBus;
         private readonly IPPU2C02 m_PPU2C02;
         private readonly IRAM m_VRAM;
+        private readonly IPalette m_Palette;
         private ICartridge m_Cartridge;
 
         public Nes()
@@ -32,6 +33,7 @@ namespace NesLib
             m_PPUBus = new PPUBus();
             m_PPU2C02 = new PPU2C02(m_PPUBus);
             m_VRAM = new VRAM();
+            m_Palette = new Palette();
         }
 
         public async Task InsertCartidgeAsync(string nesFile)
@@ -47,6 +49,7 @@ namespace NesLib
             m_CPUBus.ConnectRAM(m_RAM);
             m_CPUBus.ConnectPPU(m_PPU2C02);
             m_PPUBus.ConnectVRAM(m_VRAM);
+            m_PPUBus.ConnectPalette(m_Palette);
 
             m_CPU6502.RESET();
             while (true)

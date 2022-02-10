@@ -4,9 +4,47 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+/**
+ * 参考资料
+ * 1*)https://wiki.nesdev.org/w/index.php?title=PPU_palettes
+ */
+
 namespace NesLib.PPU
 {
-    internal class Palette
+    /// <summary>
+    /// 调色板索引
+    /// PPU总线上0x3F00----0x3FFF
+    /// </summary>
+    class Palette : IPalette
     {
+        private readonly byte[] m_Data;
+
+        public Palette()
+        {
+            m_Data = new byte[0x20];
+        }
+
+        public byte ReadByte(ushort addr)
+        {
+            addr = GetRealAddr(addr);
+            return m_Data[addr];
+        }
+
+        public void WriteByte(ushort addr, byte data)
+        {
+            addr = GetRealAddr(addr);
+            m_Data[addr] = data;
+        }
+
+        private ushort GetRealAddr(ushort addr)
+        {
+            addr = (ushort)(addr & 0x3F1F);
+            //3F10,3F14,3F18,3F1C为3F00,3F04,3F08,3F0C的镜像
+            if (addr == 0x3F10 || addr == 0x3F14 || addr == 0x3F18 || addr == 0x3F1C)
+            {
+                addr -= 0x10;
+            }
+            return (ushort)(addr - 0x3F00);
+        }
     }
 }

@@ -64,6 +64,7 @@
     <Compile Include="NesFile\Nes10FileLoader.cs" />
     <Compile Include="Bus\PPUBus.cs" />
     <Compile Include="PPU\CTRLRegister.cs" />
+    <Compile Include="PPU\IPalette.cs" />
     <Compile Include="PPU\IPPU2C02.cs" />
     <Compile Include="PPU\MASKRegister.cs" />
     <Compile Include="PPU\Palette.cs" />

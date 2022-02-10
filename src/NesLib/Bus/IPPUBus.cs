@@ -1,6 +1,7 @@
 ﻿using NesLib.Cartridge;
 using NesLib.Common;
 using NesLib.Memory;
+using NesLib.PPU;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,5 +14,6 @@ namespace NesLib.Bus
     {
         void ConnectVRAM(IRAM ram);
         void ConnectCartridge(ICartridge cartridge);
+        void ConnectPalette(IPalette palette);
     }
 }
