@@ -45,33 +45,7 @@ namespace NesLib.Bus
             return 0;
         }
 
-        public ushort ReadWord(ushort addr)
-        {
-            addr = GetRealAddr(addr);
-            if (addr < 0x2000)
-            {
-                return m_Cartridge.CHRRom[addr];
-            }
-            else if (addr >= 0x2000 && addr < 0x3F00)
-            {
-            }
-            else if (addr >= 0x3F00 && addr < 0x4000)
-            {
-            }
-            else
-            {
-                throw new Exception("未知地址");
-            }
-
-            return 0;
-        }
-
         public void WriteByte(ushort addr, byte data)
-        {
-            addr = GetRealAddr(addr);
-        }
-
-        public void WriteWord(ushort addr, ushort data)
         {
             addr = GetRealAddr(addr);
         }

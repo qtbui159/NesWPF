@@ -157,7 +157,7 @@ namespace NesLib.CPU
         public void RESET()
         {
             //const ushort RESET_ADDR = 0xFFFC;
-            //PC = m_CPUBus.ReadWord(RESET_ADDR);
+            //PC = ReadWord(RESET_ADDR);
             PC = 0xC000;
             SP = 0xFD;
 
@@ -631,7 +631,7 @@ namespace NesLib.CPU
                 P.InterruptDisable = 1;
                 m_Cycles += 7;
 
-                PC = m_CPUBus.ReadWord(0xFFFE);
+                PC = ReadWord(0xFFFE);
             }
             else
             {
@@ -2760,7 +2760,7 @@ namespace NesLib.CPU
         /// <returns></returns>
         private ushort Absolute()
         {
-            ushort addr = m_CPUBus.ReadWord(PC);
+            ushort addr = ReadWord(PC);
             PC += 2;
             return addr;
         }
@@ -2772,7 +2772,7 @@ namespace NesLib.CPU
         /// <returns></returns>
         private ushort AbsoluteX(out bool crossPage)
         {
-            ushort addr = m_CPUBus.ReadWord(PC);
+            ushort addr = ReadWord(PC);
             PC += 2;
             ushort newAddr = (ushort)(addr + X);
             crossPage = IsCrossPage(addr, newAddr);
@@ -2786,7 +2786,7 @@ namespace NesLib.CPU
         /// <returns></returns>
         private ushort AbsoluteY(out bool crossPage)
         {
-            ushort addr = m_CPUBus.ReadWord(PC);
+            ushort addr = ReadWord(PC);
             PC += 2;
             ushort newAddr = (ushort)(addr + Y);
             crossPage = IsCrossPage(addr, newAddr);
@@ -2809,7 +2809,7 @@ namespace NesLib.CPU
         /// <returns></returns>
         private ushort Indirect()
         {
-            ushort addr = m_CPUBus.ReadWord(PC);
+            ushort addr = ReadWord(PC);
 
             //间接寻址有个bug，低位为FF的时候，即addr如果为 0x10FF的时候
             //应该读取的2个地址为0x10FF和0x1100，由于该指令无法跨页
@@ -2820,11 +2820,11 @@ namespace NesLib.CPU
                 //Bug触发
                 byte low = m_CPUBus.ReadByte(addr);
                 byte high = m_CPUBus.ReadByte((ushort)(addr & 0xFF00));
-                addr = (ushort)(high << 8 | low);
+                addr = (ushort)((high << 8) | low);
             }
             else
             {
-                addr = m_CPUBus.ReadWord(addr);
+                addr = ReadWord(addr);
             }
 
             PC += 2;
@@ -2847,11 +2847,11 @@ namespace NesLib.CPU
             {
                 byte low = m_CPUBus.ReadByte(addr);
                 byte high = m_CPUBus.ReadByte((ushort)(addr & 0xFF00));
-                addr = (ushort)(high << 8 | low);
+                addr = (ushort)((high << 8) | low);
             }
             else
             {
-                addr = m_CPUBus.ReadWord(addr);
+                addr = ReadWord(addr);
             }
             return addr;
         }
@@ -2875,11 +2875,11 @@ namespace NesLib.CPU
             {
                 byte low = m_CPUBus.ReadByte(addr);
                 byte high = m_CPUBus.ReadByte((ushort)(addr & 0xFF00));
-                addr = (ushort)(high << 8 | low);
+                addr = (ushort)((high << 8) | low);
             }
             else
             {
-                addr = m_CPUBus.ReadWord(addr);
+                addr = ReadWord(addr);
             }
 
             addr += Y;
@@ -2900,6 +2900,13 @@ namespace NesLib.CPU
             ushort addr = (ushort)(0x100 + SP);
             byte data = m_CPUBus.ReadByte(addr);
             return data;
+        }
+
+        private ushort ReadWord(ushort addr)
+        {
+            byte low = m_CPUBus.ReadByte(addr);
+            byte high = m_CPUBus.ReadByte((ushort)(addr + 1));
+            return (ushort)((high << 8) | low);
         }
 
         /// <summary>
@@ -2960,7 +2967,7 @@ namespace NesLib.CPU
                     return true;
                 }
 
-                sum += dataList[i];
+                sum -= dataList[i];
             }
 
             return false;

@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace NesLib.Memory
 {
-    interface IRAM : IReadWrite8Bit, IReadWrite16Bit
+    interface IRAM : IReadWrite8Bit
     {
 
     }

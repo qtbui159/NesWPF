@@ -22,27 +22,11 @@ namespace NesLib.Memory
             return m_Data[addr];
         }
 
-        public ushort ReadWord(ushort addr)
-        {
-            addr = GetRealAddr(addr);
-            byte low = ReadByte(addr);
-            byte high = ReadByte((ushort)(addr + 1));
-            return (ushort)(high << 8 | low);
-        }
 
         public void WriteByte(ushort addr, byte data)
         {
             addr = GetRealAddr(addr);
             m_Data[addr] = data;
-        }
-
-        public void WriteWord(ushort addr, ushort data)
-        {
-            addr = GetRealAddr(addr);
-            byte low = (byte)(data & 0xFF);
-            byte high = (byte)(data >> 8);
-            m_Data[addr] = low;
-            m_Data[addr + 1] = high;
         }
 
         private ushort GetRealAddr(ushort addr)

@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace NesLib.Bus
 {
-    interface ICPUBus : IReadWrite8Bit, IReadWrite16Bit
+    interface ICPUBus : IReadWrite8Bit
     {
         void ConnectRAM(IRAM ram);
         void ConnectCartridge(ICartridge cartidge);

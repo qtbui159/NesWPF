@@ -108,26 +108,6 @@ namespace NesLib.Bus
             }
         }
 
-        public ushort ReadWord(ushort addr)
-        {
-            if (addr < 0x2000)
-            {
-                return m_RAM.ReadWord(addr);
-            }
-            else if (addr >= 0x2000 && addr < 0x4020)
-            {
-                throw new Exception("不支持的地址");
-            }
-            else if (addr >= 0x6000)
-            {
-                return m_Cartridge.Mapper.ReadWord(addr);
-            }
-            else
-            { 
-                throw new Exception("不支持的地址");
-            }
-        }
-
         public void WriteByte(ushort addr, byte data)
         {
             if (addr < 0x2000)
@@ -235,25 +215,6 @@ namespace NesLib.Bus
             }
         }
 
-        public void WriteWord(ushort addr, ushort data)
-        {
-            if (addr < 0x2000)
-            {
-                m_RAM.WriteWord(addr, data);
-            }
-            else if (addr >= 0x2000 && addr < 0x4020)
-            {
-                throw new Exception("不支持的地址");
-            }
-            else if (addr >= 0x6000)
-            {
-                m_Cartridge.Mapper.WriteWord(addr, data);
-            }
-            else
-            { 
-                throw new Exception("不支持的地址");
-            }
-        }
 
         private ushort GetIORegisterRealAddr(ushort addr)
         {

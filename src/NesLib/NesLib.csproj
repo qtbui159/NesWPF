@@ -48,7 +48,6 @@
     <Compile Include="Cartridge\ICartridge.cs" />
     <Compile Include="Cartridge\Mapper\IMapper.cs" />
     <Compile Include="Cartridge\Mapper\Mapper000.cs" />
-    <Compile Include="Common\IReadWrite16Bit.cs" />
     <Compile Include="Common\IReadWrite8Bit.cs" />
     <Compile Include="CPU\CPU6502.cs" />
     <Compile Include="CPU\ProcessorStatusRegister.cs" />
@@ -67,6 +66,7 @@
     <Compile Include="PPU\CTRLRegister.cs" />
     <Compile Include="PPU\IPPU2C02.cs" />
     <Compile Include="PPU\MASKRegister.cs" />
+    <Compile Include="PPU\Palette.cs" />
     <Compile Include="PPU\PPU2C02.cs" />
     <Compile Include="PPU\STATUSRegister.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

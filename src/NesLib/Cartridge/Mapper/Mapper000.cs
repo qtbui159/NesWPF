@@ -46,37 +46,10 @@ namespace NesLib.Cartridge.Mapper
             }
         }
 
-        public ushort ReadWord(ushort addr)
-        {
-            byte low;
-            byte high;
-            if (addr >= 0x6000 && addr <= 0x7FFF)
-            {
-                addr = GetPRGRamRealAddr(addr);
-                low = m_PRGRam[addr];
-                high = m_PRGRam[addr + 1];
-            }
-            else if (addr >= 0x8000 && addr <= 0xFFFF)
-            {
-                addr = GetPRGRomRealAddr(addr);
-                low = m_PRGRom[addr];
-                high = m_PRGRom[addr + 1];
-            }
-            else
-            {
-                throw new Exception("未知地址");
-            }
-
-            return (ushort)((high << 8) | low);
-        }
-
         public void WriteByte(ushort addr, byte data)
         {
-            throw new NotSupportedException();
-        }
-
-        public void WriteWord(ushort addr, ushort data)
-        {
+            //目前暂不支持写ram
+            //rom不可写
             throw new NotSupportedException();
         }
 

@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace NesLib.Cartridge.Mapper
 {
-    public interface IMapper : IReadWrite8Bit, IReadWrite16Bit
+    public interface IMapper : IReadWrite8Bit
     {
         int Version { get; }
     }

@@ -13,17 +13,7 @@ namespace NesLib.Memory
             throw new NotImplementedException();
         }
 
-        public ushort ReadWord(ushort addr)
-        {
-            throw new NotImplementedException();
-        }
-
         public void WriteByte(ushort addr, byte data)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void WriteWord(ushort addr, ushort data)
         {
             throw new NotImplementedException();
         }
