@@ -1,4 +1,5 @@
 ﻿using NesLib.Cartridge.Mapper;
+using NesLib.Common;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,12 +10,13 @@ namespace NesLib.Cartridge
 {
     class Cartridge : ICartridge
     {
+        public MirroringMode MirroringMode { get; internal set; }
         public IMapper Mapper { get; internal set; }
         public byte[] PRGRam { get; internal set; }
         public byte[] PRGRom { get; internal set; }
         public byte[] CHRRom { get; internal set; }
 
-        internal static ICartridge New(byte[] prgRom, byte[] chrRom, int mapperVersion)
+        internal static ICartridge New(MirroringMode mirroringMode, byte[] prgRom, byte[] chrRom, int mapperVersion)
         {
             byte[] prgRam = new byte[0x2000];
             IMapper mapper;
@@ -33,6 +35,7 @@ namespace NesLib.Cartridge
                 CHRRom = chrRom,
                 PRGRom = prgRom,
                 Mapper = mapper,
+                MirroringMode = mirroringMode
             };
         }
     }

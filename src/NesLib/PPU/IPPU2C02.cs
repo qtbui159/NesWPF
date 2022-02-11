@@ -38,5 +38,11 @@ namespace NesLib.PPU
         /// 双写操作，初始化为false
         /// </summary>
         bool WriteX2Flag { get; set; }
+
+        /// <summary>
+        /// 切换当前PPU的命名表映射规则
+        /// </summary>
+        /// <param name="mirroringMode"></param>
+        void SwitchNameTableMirroring(MirroringMode mirroringMode);
     }
 }

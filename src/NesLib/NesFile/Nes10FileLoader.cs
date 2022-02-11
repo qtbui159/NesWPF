@@ -1,4 +1,5 @@
 ﻿using NesLib.Cartridge;
+using NesLib.Common;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -12,7 +13,7 @@ namespace NesLib.NesFile
     /// <summary>
     /// NES1.0版本的文件
     /// </summary>
-    public class Nes10FileLoader : IFileLoader
+    class Nes10FileLoader : IFileLoader
     {
         public Task<ICartridge> LoadAsync(string path)
         {
@@ -48,6 +49,16 @@ namespace NesLib.NesFile
             int amountOfCHRBlock = data[5]; //指明CHR块的数量
             byte flag1 = data[6]; //https://wiki.nesdev.org/w/index.php/INES#Flags_6
             byte flag2 = data[7]; //https://wiki.nesdev.org/w/index.php/INES#Flags_7
+            MirroringMode mirroringMode = MirroringMode.Horizontal;
+            byte bMirroringMode = BitService.GetBit(flag1, 0);
+            if (bMirroringMode == 0)
+            {
+                mirroringMode = MirroringMode.Horizontal;
+            }
+            else if (bMirroringMode == 1)
+            {
+                mirroringMode = MirroringMode.Vertical;
+            }
 
             bool trainerPresent = BitService.GetBit(flag1, 2) == 1;
             int trainerSize = trainerPresent ? 512 : 0;
@@ -59,7 +70,7 @@ namespace NesLib.NesFile
             byte[] chrData = data.Skip(16 + trainerSize + amountOfPRGBlock * 16 * 1024).Take(amountOfCHRBlock * 8 * 1024).ToArray();
 
             await Task.CompletedTask.ConfigureAwait(false);
-            return Cartridge.Cartridge.New(prgData, chrData, mapper);
+            return Cartridge.Cartridge.New(mirroringMode, prgData, chrData, mapper);
         }
     }
 }

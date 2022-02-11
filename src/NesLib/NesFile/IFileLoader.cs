@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace NesLib.NesFile
 {
-    public interface IFileLoader
+    interface IFileLoader
     {
         /// <summary>
         /// 载入nes文件，返回解析后的卡带信息

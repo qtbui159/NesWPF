@@ -42,6 +42,7 @@ namespace NesLib
             ICartridge cartridge = await fileLoader.LoadAsync(@"C:\Users\Spike\Desktop\nestest.nes");
             m_Cartridge = cartridge;
             m_CPUBus.ConnectCartridge(m_Cartridge);
+            m_PPU2C02.SwitchNameTableMirroring(m_Cartridge.MirroringMode);
         }
 
         public void PowerUp()

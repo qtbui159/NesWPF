@@ -49,6 +49,7 @@
     <Compile Include="Cartridge\Mapper\IMapper.cs" />
     <Compile Include="Cartridge\Mapper\Mapper000.cs" />
     <Compile Include="Common\IReadWrite8Bit.cs" />
+    <Compile Include="Common\MirroringMode.cs" />
     <Compile Include="CPU\CPU6502.cs" />
     <Compile Include="CPU\ProcessorStatusRegister.cs" />
     <Compile Include="CPU\ICPU6502.cs" />
