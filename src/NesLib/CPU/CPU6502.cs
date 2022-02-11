@@ -151,32 +151,45 @@ namespace NesLib.CPU
         public void NMI()
         {
             const ushort NMI_ADDR = 0xFFFA;
+            
+            Push((byte)((PC >> 8) & 0xFF));
+            Push((byte)(PC & 0xFF));
+            byte p = P.Value;
+            p = BitService.SetBit(p, 5);
+            Push(p);
+            P.InterruptDisable = 1;
+
+            PC = ReadWord(NMI_ADDR);
         }
 
         private StreamWriter sw;
         public void RESET()
         {
-            //const ushort RESET_ADDR = 0xFFFC;
-            //PC = ReadWord(RESET_ADDR);
-            PC = 0xC000;
+            const ushort RESET_ADDR = 0xFFFC;
+            PC = ReadWord(RESET_ADDR);
+            //PC = 0xC000;
             SP = 0xFD;
+            A = 0;
+            X = 0;
+            Y = 0;
+            P.SetValue(0x34);
 
             sw = new StreamWriter(new FileStream("D:/1.txt", FileMode.Create), Encoding.UTF8);
         }
 
         public void TickTock()
         {
-            sw.WriteLine($"{PC:X2}     A:{A:X2} X:{X:X2} Y:{Y:X2} P:{P.Value:X2} SP:{SP:X2}");
-            if (m_Cycles > 30000)
-            {
-                sw.Close();
-                return;
-            }
+            //sw.WriteLine($"{PC:X2}     A:{A:X2} X:{X:X2} Y:{Y:X2} P:{P.Value:X2} SP:{SP:X2}");
+            //if (m_Cycles > 30000)
+            //{
+            //    sw.Close();
+            //    return;
+            //}
 
-            if (PC == 0xC66E)
-            {
-                sw.Close();
-            }
+            //if (PC == 0xC66E)
+            //{
+            //    sw.Close();
+            //}
 
             byte opCode = m_CPUBus.ReadByte(PC++);
             if (!m_OPCodeMapImpl.ContainsKey(opCode))

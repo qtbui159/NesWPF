@@ -18,5 +18,13 @@ namespace NesLib
         /// </summary>
         /// <param name="nesFile">卡文件</param>
         Task InsertCartidgeAsync(string nesFile);
+
+        /// <summary>
+        /// 获取背景色,rgba
+        /// </summary>
+        /// <param name="x"></param>
+        /// <param name="y"></param>
+        /// <returns></returns>
+        int GetBackgroundColor(int x, int y);
     }
 }

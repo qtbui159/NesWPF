@@ -43,59 +43,66 @@ namespace NesLib.Bus
             }
             else if (addr >= 0x2000 && addr < 0x4020)
             {
-                addr = GetIORegisterRealAddr(addr);
-                if (addr == 0x2000)
+                if (addr < 0x4000)
                 {
-                    throw new Exception("该地址不支持读取");
-                }
-                else if (addr == 0x2001)
-                {
-                    throw new Exception("该地址不支持读取");
-                }
-                else if (addr == 0x2002)
-                {
-                    // 读取后会清除VBlank状态
-                    byte data= m_PPU.STATUS.Value;
-                    m_PPU.STATUS.V = 0;
-                    return data;
-                }
-                else if (addr == 0x2003)
-                {
-                    throw new Exception("该地址不支持读取");
-                }
-                else if (addr == 0x2004)
-                {
-                    return m_PPU.OAM[m_PPU.OAMAddr++];
-                }
-                else if (addr == 0x2005)
-                {
-                    throw new Exception("该地址不支持读取");
-                }
-                else if (addr == 0x2006)
-                {
-                    throw new Exception("该地址不支持读取");
-                }
-                else if (addr == 0x2007)
-                {
-                    byte data = m_PPU.ReadByte(m_PPU.Addr);
+                    ushort addr2 = GetIORegisterRealAddr(addr);
+                    if (addr2 == 0x2000)
+                    {
+                        throw new Exception("该地址不支持读取");
+                    }
+                    else if (addr2 == 0x2001)
+                    {
+                        throw new Exception("该地址不支持读取");
+                    }
+                    else if (addr2 == 0x2002)
+                    {
+                        // 读取后会清除VBlank状态
+                        byte data = m_PPU.STATUS.Value;
+                        m_PPU.STATUS.V = 0;
+                        //byte data2 = data;
+                        //data2 &= (byte)~data2;
+                        //m_PPU.STATUS.SetValue(data2);
+                        return data;
+                    }
+                    else if (addr2 == 0x2003)
+                    {
+                        throw new Exception("该地址不支持读取");
+                    }
+                    else if (addr2 == 0x2004)
+                    {
+                        return m_PPU.OAM[m_PPU.OAMAddr++];
+                    }
+                    else if (addr2 == 0x2005)
+                    {
+                        throw new Exception("该地址不支持读取");
+                    }
+                    else if (addr2 == 0x2006)
+                    {
+                        throw new Exception("该地址不支持读取");
+                    }
+                    else if (addr2 == 0x2007)
+                    {
+                        byte data = m_PPU.ReadByte(m_PPU.Addr);
 
-                    if (m_PPU.CTRL.I == 1)
-                    {
-                        m_PPU.Addr += 32;
+                        if (m_PPU.CTRL.I == 1)
+                        {
+                            m_PPU.Addr += 32;
+                        }
+                        else
+                        {
+                            m_PPU.Addr += 1;
+                        }
+                        return data;
                     }
-                    else
-                    {
-                        m_PPU.Addr += 1;
-                    }
-                    return data;
                 }
-                else if (addr == 0x4014)
+                
+                if (addr == 0x4014)
                 {
                     throw new Exception("该地址不支持读取");
                 }
                 else
                 {
-                    throw new Exception("该地址不支持读取");
+                    return 0;
                 }
             }
             else if (addr >= 0x6000)
@@ -116,77 +123,83 @@ namespace NesLib.Bus
             }
             else if (addr >= 0x2000 && addr < 0x4020)
             {
-                addr = GetIORegisterRealAddr(addr);
-                if (addr == 0x2000)
+                if (addr < 0x4000)
                 {
-                    m_PPU.CTRL.SetValue(data);
-                }
-                else if (addr == 0x2001)
-                {
-                    m_PPU.MASK.SetValue(data);
-                }
-                else if (addr == 0x2002)
-                {
-                    throw new Exception("该地址不支持写入");
-                }
-                else if (addr == 0x2003)
-                {
-                    m_PPU.OAMAddr = data;
-                }
-                else if (addr == 0x2004)
-                {
-                    m_PPU.OAM[m_PPU.OAMAddr++] = data;
-                }
-                else if (addr == 0x2005)
-                {
-                    //双写操作，参考资料1*)
-                    if (m_PPU.WriteX2Flag)
-                    {
-                        //二写
-                    }
-                    else
-                    {
-                        //一写
-                    }
+                    ushort addr2 = GetIORegisterRealAddr(addr);
 
-                    m_PPU.WriteX2Flag = !m_PPU.WriteX2Flag;
-                }
-                else if (addr == 0x2006)
-                {
-                    //双写操作，参考资料2*)
-                    if (m_PPU.WriteX2Flag)
+                    if (addr2 == 0x2000)
                     {
-                        //二写，再写低位
-                        ushort tmpAddr = m_PPU.Addr;
-                        tmpAddr = (ushort)(tmpAddr & 0xFF00);
-                        tmpAddr = (ushort)(tmpAddr | data);
-                        m_PPU.Addr = tmpAddr;
+                        m_PPU.CTRL.SetValue(data);
                     }
-                    else
+                    else if (addr2 == 0x2001)
                     {
-                        //一写，先写高位
-                        ushort tmpAddr = m_PPU.Addr;
-                        tmpAddr = (ushort)(tmpAddr & 0x00FF);
-                        tmpAddr = (ushort)((data << 8) | tmpAddr);
-                        m_PPU.Addr = tmpAddr;
+                        m_PPU.MASK.SetValue(data);
                     }
+                    else if (addr2 == 0x2002)
+                    {
+                        throw new Exception("该地址不支持写入");
+                    }
+                    else if (addr2 == 0x2003)
+                    {
+                        m_PPU.OAMAddr = data;
+                    }
+                    else if (addr2 == 0x2004)
+                    {
+                        m_PPU.OAM[m_PPU.OAMAddr++] = data;
+                    }
+                    else if (addr2 == 0x2005)
+                    {
+                        //双写操作，参考资料1*)
+                        if (m_PPU.WriteX2Flag)
+                        {
+                            //二写
+                        }
+                        else
+                        {
+                            //一写
+                        }
 
-                    m_PPU.WriteX2Flag = !m_PPU.WriteX2Flag;
-                }
-                else if (addr == 0x2007)
-                {
-                    m_PPU.WriteByte(addr, data);
+                        m_PPU.WriteX2Flag = !m_PPU.WriteX2Flag;
+                    }
+                    else if (addr2 == 0x2006)
+                    {
+                        //双写操作，参考资料2*)
+                        if (m_PPU.WriteX2Flag)
+                        {
+                            //二写，再写低位
+                            ushort tmpAddr = m_PPU.Addr;
+                            tmpAddr = (ushort)(tmpAddr & 0xFF00);
+                            tmpAddr = (ushort)(tmpAddr | data);
+                            m_PPU.Addr = tmpAddr;
+                        }
+                        else
+                        {
+                            //一写，先写高位
+                            ushort tmpAddr = m_PPU.Addr;
+                            tmpAddr = (ushort)(tmpAddr & 0x00FF);
+                            tmpAddr = (ushort)((data << 8) | tmpAddr);
+                            m_PPU.Addr = tmpAddr;
+                        }
 
-                    if (m_PPU.CTRL.I == 1)
-                    {
-                        m_PPU.Addr += 32;
+                        m_PPU.WriteX2Flag = !m_PPU.WriteX2Flag;
                     }
-                    else
+                    else if (addr2 == 0x2007)
                     {
-                        m_PPU.Addr += 1;
+                        m_PPU.WriteByte(m_PPU.Addr, data);
+
+                        if (m_PPU.CTRL.I == 1)
+                        {
+                            m_PPU.Addr += 32;
+                        }
+                        else
+                        {
+                            m_PPU.Addr += 1;
+                        }
                     }
                 }
-                else if (addr == 0x4014)
+
+                
+                if (addr == 0x4014)
                 {
                     ushort startAddr = (ushort)(data << 8);
                     ushort endAddr = (ushort)(startAddr | 0xFF);

@@ -23,7 +23,7 @@ namespace NesLib.PPU
         /// evaluation and cleared at dot 1 (the second dot) of the
         /// pre-render line.
         /// </summary>
-        public byte O { get => BitService.GetBit(Value, 5); set => Handle(5, Value); }
+        public byte O { get => BitService.GetBit(Value, 5); set => Handle(5, value); }
 
         /// <summary>
         /// 精灵命中测试标志位
@@ -32,7 +32,7 @@ namespace NesLib.PPU
         /// a nonzero background pixel; cleared at dot 1 of the pre-render
         /// line.Used for raster timing.
         /// </summary>
-        public byte S { get => BitService.GetBit(Value, 6); set => Handle(6, Value); }
+        public byte S { get => BitService.GetBit(Value, 6); set => Handle(6, value); }
 
         /// <summary>
         /// VBlank标志位
@@ -42,7 +42,7 @@ namespace NesLib.PPU
         /// line); cleared after reading $2002 and at dot 1 of the
         /// pre-render line.
         /// </summary>
-        public byte V { get => BitService.GetBit(Value, 7); set => Handle(7, Value); }
+        public byte V { get => BitService.GetBit(Value, 7); set => Handle(7, value); }
 
         private void Handle(int pos, byte value)
         {

@@ -42,6 +42,7 @@ namespace NesLib
             ICartridge cartridge = await fileLoader.LoadAsync(@"C:\Users\Spike\Desktop\nestest.nes");
             m_Cartridge = cartridge;
             m_CPUBus.ConnectCartridge(m_Cartridge);
+            m_PPUBus.ConnectCartridge(m_Cartridge);
             m_PPU2C02.SwitchNameTableMirroring(m_Cartridge.MirroringMode);
         }
 
@@ -53,11 +54,29 @@ namespace NesLib
             m_PPUBus.ConnectPalette(m_Palette);
 
             m_CPU6502.RESET();
+            int i = 0;
             while (true)
             {
-                //Thread.Sleep(100);
+                ++i;
                 m_CPU6502.TickTock();
+
+                if (i >= 10000)
+                {
+                    //VBLANK
+                    m_PPU2C02.STATUS.V = 1;
+
+                    if (m_PPU2C02.CTRL.V == 1)
+                    {
+                        m_CPU6502.NMI();
+                    }
+
+                }
             }
+        }
+
+        public int GetBackgroundColor(int x, int y)
+        {
+            return m_PPU2C02.GetBackgroundPixel(x, y);
         }
     }
 }

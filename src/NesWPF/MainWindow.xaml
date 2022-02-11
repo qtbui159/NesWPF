@@ -5,8 +5,12 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:NesWPF"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+        Title="MainWindow" Height="768" Width="1024">
     <Grid>
-        <Button Height="100" Width="200" Click="Button_Click"/>
+        <Button Height="100" Width="200" Click="Button_Click" Margin="535,95,65,240"/>
+        <Button Height="100" Width="200" Click="Button_Click2" Margin="535,260,65,75"/>
+        <Viewbox Width="512" Height="480" Stretch="Fill" HorizontalAlignment="Left">
+            <Image Width="256" Height="240" x:Name="img"></Image>
+        </Viewbox>
     </Grid>
 </Window>

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -17,7 +18,24 @@ namespace NesLib.PPU
     /// </summary>
     class Palette : IPalette
     {
+        private static readonly Dictionary<int, int> m_OffsetMapRGBA;
         private readonly byte[] m_Data;
+
+        static Palette()
+        {
+            m_OffsetMapRGBA = new Dictionary<int, int>();
+            byte[] data = File.ReadAllBytes(@"C:\Users\Spike\Desktop\ntscpalette.pal");
+            for (int i = 0; i < data.Length; i += 3)
+            {
+                byte r = data[i];
+                byte g = data[i + 1];
+                byte b = data[i + 2];
+                byte a = 0xFF;
+
+                int value = (r << 24) | (g << 16) | (b << 8) | a;
+                m_OffsetMapRGBA.Add(i, value);
+            }
+        }
 
         public Palette()
         {
@@ -45,6 +63,11 @@ namespace NesLib.PPU
                 addr -= 0x10;
             }
             return (ushort)(addr - 0x3F00);
+        }
+
+        public static int GetRGBAColor(byte paletteOffset)
+        {
+            return m_OffsetMapRGBA[paletteOffset];
         }
     }
 }
