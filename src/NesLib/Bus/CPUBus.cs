@@ -55,42 +55,39 @@ namespace NesLib.Bus
             {
                 if (addr < 0x4000)
                 {
-                    ushort addr2 = GetIORegisterRealAddr(addr);
-                    if (addr2 == 0x2000)
+                    ushort ioRealAddr = GetIORegisterRealAddr(addr);
+                    if (ioRealAddr == 0x2000)
                     {
                         throw new Exception("该地址不支持读取");
                     }
-                    else if (addr2 == 0x2001)
+                    else if (ioRealAddr == 0x2001)
                     {
                         throw new Exception("该地址不支持读取");
                     }
-                    else if (addr2 == 0x2002)
+                    else if (ioRealAddr == 0x2002)
                     {
                         // 读取后会清除VBlank状态
                         byte data = m_PPU.STATUS.Value;
                         m_PPU.STATUS.V = 0;
-                        //byte data2 = data;
-                        //data2 &= (byte)~data2;
-                        //m_PPU.STATUS.SetValue(data2);
                         return data;
                     }
-                    else if (addr2 == 0x2003)
+                    else if (ioRealAddr == 0x2003)
                     {
                         throw new Exception("该地址不支持读取");
                     }
-                    else if (addr2 == 0x2004)
+                    else if (ioRealAddr == 0x2004)
                     {
                         return m_PPU.OAM[m_PPU.OAMAddr++];
                     }
-                    else if (addr2 == 0x2005)
+                    else if (ioRealAddr == 0x2005)
                     {
                         throw new Exception("该地址不支持读取");
                     }
-                    else if (addr2 == 0x2006)
+                    else if (ioRealAddr == 0x2006)
                     {
                         throw new Exception("该地址不支持读取");
                     }
-                    else if (addr2 == 0x2007)
+                    else if (ioRealAddr == 0x2007)
                     {
                         byte data = m_PPU.ReadByte(m_PPU.Addr);
 
@@ -104,9 +101,12 @@ namespace NesLib.Bus
                         }
                         return data;
                     }
+                    else
+                    {
+                        throw new Exception("该地址不支持读取");
+                    }
                 }
-
-                if (addr == 0x4014)
+                else if (addr == 0x4014)
                 {
                     throw new Exception("该地址不支持读取");
                 }
@@ -145,29 +145,29 @@ namespace NesLib.Bus
             {
                 if (addr < 0x4000)
                 {
-                    ushort addr2 = GetIORegisterRealAddr(addr);
+                    ushort ioRealAddr = GetIORegisterRealAddr(addr);
 
-                    if (addr2 == 0x2000)
+                    if (ioRealAddr == 0x2000)
                     {
                         m_PPU.CTRL.SetValue(data);
                     }
-                    else if (addr2 == 0x2001)
+                    else if (ioRealAddr == 0x2001)
                     {
                         m_PPU.MASK.SetValue(data);
                     }
-                    else if (addr2 == 0x2002)
+                    else if (ioRealAddr == 0x2002)
                     {
                         throw new Exception("该地址不支持写入");
                     }
-                    else if (addr2 == 0x2003)
+                    else if (ioRealAddr == 0x2003)
                     {
                         m_PPU.OAMAddr = data;
                     }
-                    else if (addr2 == 0x2004)
+                    else if (ioRealAddr == 0x2004)
                     {
                         m_PPU.OAM[m_PPU.OAMAddr++] = data;
                     }
-                    else if (addr2 == 0x2005)
+                    else if (ioRealAddr == 0x2005)
                     {
                         //双写操作，参考资料1*)
                         if (m_PPU.WriteX2Flag)
@@ -181,7 +181,7 @@ namespace NesLib.Bus
 
                         m_PPU.WriteX2Flag = !m_PPU.WriteX2Flag;
                     }
-                    else if (addr2 == 0x2006)
+                    else if (ioRealAddr == 0x2006)
                     {
                         //双写操作，参考资料2*)
                         if (m_PPU.WriteX2Flag)
@@ -203,7 +203,7 @@ namespace NesLib.Bus
 
                         m_PPU.WriteX2Flag = !m_PPU.WriteX2Flag;
                     }
-                    else if (addr2 == 0x2007)
+                    else if (ioRealAddr == 0x2007)
                     {
                         m_PPU.WriteByte(m_PPU.Addr, data);
 
@@ -217,9 +217,7 @@ namespace NesLib.Bus
                         }
                     }
                 }
-
-                
-                if (addr == 0x4014)
+                else if(addr == 0x4014)
                 {
                     ushort startAddr = (ushort)(data << 8);
                     ushort endAddr = (ushort)(startAddr | 0xFF);
@@ -241,10 +239,6 @@ namespace NesLib.Bus
                         m_P1JoyStick.ClearOffset();
                         m_P2JoyStick.ClearOffset();
                     }
-                }
-                else
-                {
-
                 }
             }
             else if (addr >= 0x6000)

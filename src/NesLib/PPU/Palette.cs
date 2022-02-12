@@ -57,10 +57,14 @@ namespace NesLib.PPU
         private ushort GetRealAddr(ushort addr)
         {
             addr = (ushort)(addr & 0x3F1F);
-            //3F10,3F14,3F18,3F1C为3F00,3F04,3F08,3F0C的镜像
+            //3F10,3F14,3F18,3F1C为3F00,3F04,3F08,3F0C的镜像，其中3F04,3F08,3F0C根据资料1*)为backdrop的颜色
             if (addr == 0x3F10 || addr == 0x3F14 || addr == 0x3F18 || addr == 0x3F1C)
             {
                 addr -= 0x10;
+            }
+            if (addr == 0x3F04 || addr == 0x3F08 || addr == 0x3F0C)
+            {
+                addr = 0x3F00;
             }
             return (ushort)(addr - 0x3F00);
         }

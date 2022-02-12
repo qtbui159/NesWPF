@@ -32,19 +32,19 @@ namespace NesLib.Bus
 
         public byte ReadByte(ushort addr)
         {
-            addr = GetRealAddr(addr);
-            if (addr < 0x2000)
+            ushort readlAddr = GetRealAddr(addr);
+            if (readlAddr < 0x2000)
             {
                 //这里实现暂时有问题，应该用Mapper去读取，因为可能包含镜像
-                return m_Cartridge.CHRRom[addr];
+                return m_Cartridge.CHRRom[readlAddr];
             }
-            else if (addr >= 0x2000 && addr < 0x3F00)
+            else if (readlAddr >= 0x2000 && readlAddr < 0x3F00)
             {
-                return m_VRAM.ReadByte(addr);   
+                return m_VRAM.ReadByte(readlAddr);   
             }
-            else if (addr >= 0x3F00 && addr < 0x4000)
+            else if (readlAddr >= 0x3F00 && readlAddr < 0x4000)
             {
-                return m_Palette.ReadByte(addr);
+                return m_Palette.ReadByte(readlAddr);
             }
             else
             {
@@ -54,19 +54,19 @@ namespace NesLib.Bus
 
         public void WriteByte(ushort addr, byte data)
         {
-            addr = GetRealAddr(addr);
+            ushort readAddr = GetRealAddr(addr);
 
-            if (addr < 0x2000)
+            if (readAddr < 0x2000)
             {
                 throw new Exception("该地址不支持写入操作");
             }
-            else if (addr >= 0x2000 && addr < 0x3F00)
+            else if (readAddr >= 0x2000 && readAddr < 0x3F00)
             {
-                m_VRAM.WriteByte(addr, data);
+                m_VRAM.WriteByte(readAddr, data);
             }
-            else if (addr >= 0x3F00 && addr < 0x4000)
+            else if (readAddr >= 0x3F00 && readAddr < 0x4000)
             {
-                m_Palette.WriteByte(addr, data);
+                m_Palette.WriteByte(readAddr, data);
             }
             else
             {
