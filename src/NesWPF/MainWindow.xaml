@@ -12,5 +12,41 @@
         <Viewbox Width="512" Height="480" Stretch="Fill" HorizontalAlignment="Left">
             <Image Width="256" Height="240" x:Name="img"></Image>
         </Viewbox>
+        <UniformGrid Height="100" VerticalAlignment="Top" Columns="16" Rows="2">
+            <Grid x:Name="grid0"/>
+            <Grid x:Name="grid1"/>
+            <Grid x:Name="grid2"/>
+            <Grid x:Name="grid3"/>
+            <Grid x:Name="grid4"/>
+            <Grid x:Name="grid5"/>
+            <Grid x:Name="grid6"/>
+            <Grid x:Name="grid7"/>
+            <Grid x:Name="grid8"/>
+            <Grid x:Name="grid9"/>
+            <Grid x:Name="grid10"/>
+            <Grid x:Name="grid11"/>
+            <Grid x:Name="grid12"/>
+            <Grid x:Name="grid13"/>
+            <Grid x:Name="grid14"/>
+            <Grid x:Name="grid15"/>
+
+            <Grid x:Name="grid16"/>
+            <Grid x:Name="grid17"/>
+            <Grid x:Name="grid18"/>
+            <Grid x:Name="grid19"/>
+            <Grid x:Name="grid20"/>
+            <Grid x:Name="grid21"/>
+            <Grid x:Name="grid22"/>
+            <Grid x:Name="grid23"/>
+            <Grid x:Name="grid24"/>
+            <Grid x:Name="grid25"/>
+            <Grid x:Name="grid26"/>
+            <Grid x:Name="grid27"/>
+            <Grid x:Name="grid28"/>
+            <Grid x:Name="grid29"/>
+            <Grid x:Name="grid30"/>
+            <Grid x:Name="grid31"/>
+        </UniformGrid>
+        <Button Height="100" Width="200" Click="Button_Click3" Margin="647,565,177,88"/>
     </Grid>
 </Window>

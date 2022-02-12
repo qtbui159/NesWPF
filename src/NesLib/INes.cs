@@ -26,5 +26,11 @@ namespace NesLib
         /// <param name="y"></param>
         /// <returns></returns>
         int GetBackgroundColor(int x, int y);
+
+        /// <summary>
+        /// 获取20个调色板数据，rgba
+        /// </summary>
+        /// <returns></returns>
+        int[] GetPalette();
     }
 }

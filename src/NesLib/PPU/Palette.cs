@@ -25,11 +25,11 @@ namespace NesLib.PPU
         {
             m_OffsetMapRGBA = new Dictionary<int, int>();
             byte[] data = File.ReadAllBytes(@"C:\Users\Spike\Desktop\ntscpalette.pal");
-            for (int i = 0; i < data.Length; i += 3)
+            for (int i = 0; i < data.Length / 3; ++i)
             {
-                byte r = data[i];
-                byte g = data[i + 1];
-                byte b = data[i + 2];
+                byte r = data[i*3];
+                byte g = data[i*3 + 1];
+                byte b = data[i*3 + 2];
                 byte a = 0xFF;
 
                 int value = (r << 24) | (g << 16) | (b << 8) | a;

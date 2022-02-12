@@ -61,5 +61,24 @@ namespace NesWPF
 
             wb.Unlock();
         }
+
+        private void Button_Click3(object sender, RoutedEventArgs e)
+        {
+            int[] s = nes.GetPalette();
+            for (int i = 0; i < s.Length; ++i)
+            {
+                Grid grid = FindName($"grid{i}") as Grid;
+
+                int rgba = s[i];
+                byte r = (byte)(rgba >> 24);
+                byte g = (byte)(rgba >> 16);
+                g &= 0xFF;
+                byte b = (byte)(rgba >> 8);
+                b &= 0xFF;
+                byte a = (byte)(rgba & 0xFF);
+
+                grid.Background = new SolidColorBrush(Color.FromArgb(a,r,g,b));
+            }
+        }
     }
 }

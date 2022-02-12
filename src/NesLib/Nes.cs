@@ -78,5 +78,16 @@ namespace NesLib
         {
             return m_PPU2C02.GetBackgroundPixel(x, y);
         }
+
+        public int[] GetPalette()
+        {
+            List<int> r = new List<int>();
+            for (int i = 0; i < 0x20; ++i)
+            {
+                byte offset = m_PPUBus.ReadByte((ushort)(0x3F00 + i));
+                r.Add(Palette.GetRGBAColor(offset));
+            }
+            return r.ToArray();
+        }
     }
 }
