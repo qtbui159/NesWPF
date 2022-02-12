@@ -52,5 +52,13 @@ namespace NesLib.PPU
         /// <param name="y"></param>
         /// <returns></returns>
         int GetBackgroundPixel(int x, int y);
+
+        /// <summary>
+        /// 获取背景tile，每个tile 8*8像素,共32*30
+        /// </summary>
+        /// <param name="tx"></param>
+        /// <param name="ty"></param>
+        /// <returns></returns>
+        int[][] GetBackgroundTileColor(int tx, int ty);
     }
 }

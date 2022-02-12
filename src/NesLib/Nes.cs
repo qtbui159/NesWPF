@@ -39,7 +39,7 @@ namespace NesLib
         public async Task InsertCartidgeAsync(string nesFile)
         {
             IFileLoader fileLoader = new Nes10FileLoader();
-            ICartridge cartridge = await fileLoader.LoadAsync(@"C:\Users\Spike\Desktop\nestest.nes");
+            ICartridge cartridge = await fileLoader.LoadAsync(nesFile);
             m_Cartridge = cartridge;
             m_CPUBus.ConnectCartridge(m_Cartridge);
             m_PPUBus.ConnectCartridge(m_Cartridge);
@@ -69,7 +69,7 @@ namespace NesLib
                     {
                         m_CPU6502.NMI();
                     }
-
+                    i = 0;
                 }
             }
         }
@@ -88,6 +88,11 @@ namespace NesLib
                 r.Add(Palette.GetRGBAColor(offset));
             }
             return r.ToArray();
+        }
+
+        public int[][] GetBackgroundTileColor(int tx, int ty)
+        {
+            return m_PPU2C02.GetBackgroundTileColor(tx, ty);
         }
     }
 }

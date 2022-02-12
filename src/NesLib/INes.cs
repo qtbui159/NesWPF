@@ -28,6 +28,14 @@ namespace NesLib
         int GetBackgroundColor(int x, int y);
 
         /// <summary>
+        /// 获取背景tile，每个tile 8*8像素,共32*30
+        /// </summary>
+        /// <param name="tx"></param>
+        /// <param name="ty"></param>
+        /// <returns></returns>
+        int[][] GetBackgroundTileColor(int tx, int ty);
+
+        /// <summary>
         /// 获取20个调色板数据，rgba
         /// </summary>
         /// <returns></returns>
