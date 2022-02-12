@@ -44,17 +44,19 @@ namespace NesLib.PPU
 
         public byte ReadByte(ushort addr)
         {
-            addr = GetRealAddr(addr);
+            //需要特别注意的是调色板写时地址和读时地址需要分别处理
+            addr = GetReadRealAddr(addr);
             return m_Data[addr];
         }
 
         public void WriteByte(ushort addr, byte data)
         {
-            addr = GetRealAddr(addr);
+            //需要特别注意的是调色板写时地址和读时地址需要分别处理
+            addr = GetWriteRealAddr(addr);
             m_Data[addr] = data;
         }
 
-        private ushort GetRealAddr(ushort addr)
+        private ushort GetReadRealAddr(ushort addr)
         {
             addr = (ushort)(addr & 0x3F1F);
             //3F10,3F14,3F18,3F1C为3F00,3F04,3F08,3F0C的镜像，其中3F04,3F08,3F0C根据资料1*)为backdrop的颜色
@@ -65,6 +67,17 @@ namespace NesLib.PPU
             if (addr == 0x3F04 || addr == 0x3F08 || addr == 0x3F0C)
             {
                 addr = 0x3F00;
+            }
+            return (ushort)(addr - 0x3F00);
+        }
+
+        private ushort GetWriteRealAddr(ushort addr)
+        {
+            addr = (ushort)(addr & 0x3F1F);
+            //3F10,3F14,3F18,3F1C为3F00,3F04,3F08,3F0C的镜像
+            if (addr == 0x3F10 || addr == 0x3F14 || addr == 0x3F18 || addr == 0x3F1C)
+            {
+                addr -= 0x10;
             }
             return (ushort)(addr - 0x3F00);
         }
