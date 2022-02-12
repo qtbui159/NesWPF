@@ -1,4 +1,5 @@
 ﻿using NesLib.Cartridge;
+using NesLib.JoyStick;
 using NesLib.Memory;
 using NesLib.PPU;
 using System;
@@ -6,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Utils;
 
 /**
  * 参考资料
@@ -19,6 +21,8 @@ namespace NesLib.Bus
         private IRAM m_RAM;
         private ICartridge m_Cartridge;
         private IPPU2C02 m_PPU;
+        private IJoyStick m_P1JoyStick;
+        private IJoyStick m_P2JoyStick;
 
         public void ConnectRAM(IRAM ram)
         {
@@ -33,6 +37,12 @@ namespace NesLib.Bus
         public void ConnectPPU(IPPU2C02 ppu)
         {
             m_PPU = ppu;
+        }
+
+        public void ConnectJoyStock(IJoyStick p1Joystick, IJoyStick p2Joystick)
+        {
+            m_P1JoyStick = p1Joystick;
+            m_P2JoyStick = p2Joystick;
         }
 
         public byte ReadByte(ushort addr)
@@ -95,10 +105,20 @@ namespace NesLib.Bus
                         return data;
                     }
                 }
-                
+
                 if (addr == 0x4014)
                 {
                     throw new Exception("该地址不支持读取");
+                }
+                else if (addr == 0x4016)
+                {
+                    //P1手柄
+                    return m_P1JoyStick.GetValue();
+                }
+                else if (addr == 0x4017)
+                {
+                    //P2手柄
+                    return m_P2JoyStick.GetValue();
                 }
                 else
                 {
@@ -212,6 +232,15 @@ namespace NesLib.Bus
                     byte[] tmpData = dataList.ToArray();
 
                     Array.Copy(tmpData, m_PPU.OAM, tmpData.Length);
+                }
+                else if (addr == 0x4016)
+                {
+                    byte strobe = BitService.GetBit(data, 0);
+                    if (strobe == 0)
+                    {
+                        m_P1JoyStick.ClearOffset();
+                        m_P2JoyStick.ClearOffset();
+                    }
                 }
                 else
                 {

@@ -33,8 +33,8 @@ namespace NesWPF
 
         private async void Button_Click(object sender, RoutedEventArgs e)
         {
-            //await nes.InsertCartidgeAsync(@"C:\Users\Spike\Desktop\nestest.nes");
-            await nes.InsertCartidgeAsync(@"C:\Users\Spike\Desktop\896.nes");
+            await nes.InsertCartidgeAsync(@"C:\Users\Spike\Desktop\nestest.nes");
+            //await nes.InsertCartidgeAsync(@"C:\Users\Spike\Desktop\896.nes");
 
             new Thread(() =>
             {
@@ -111,7 +111,41 @@ namespace NesWPF
                 b &= 0xFF;
                 byte a = (byte)(rgba & 0xFF);
 
-                grid.Background = new SolidColorBrush(Color.FromArgb(a,r,g,b));
+                grid.Background = new SolidColorBrush(Color.FromArgb(a, r, g, b));
+            }
+        }
+
+        private void Button_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            Button btn = sender as Button;
+            if (btn.Name == "down")
+            {
+                nes.Down(true);
+            }
+            else if (btn.Name == "start")
+            {
+                nes.Start(true);
+            }
+            else if (btn.Name == "select")
+            {
+                nes.Select(true);
+            }
+        }
+
+        private void Button_MouseUp(object sender, MouseButtonEventArgs e)
+        {
+            Button btn = sender as Button;
+            if (btn.Name == "down")
+            {
+                nes.Down(false);
+            }
+            else if (btn.Name == "start")
+            {
+                nes.Start(false);
+            }
+            else if (btn.Name == "select")
+            {
+                nes.Select(false);
             }
         }
     }

@@ -2,6 +2,7 @@
 using NesLib.Cartridge;
 using NesLib.CPU;
 using NesLib.IO;
+using NesLib.JoyStick;
 using NesLib.Memory;
 using NesLib.NesFile;
 using NesLib.PPU;
@@ -23,6 +24,8 @@ namespace NesLib
         private readonly IPPU2C02 m_PPU2C02;
         private readonly IRAM m_VRAM;
         private readonly IPalette m_Palette;
+        private readonly IJoyStick m_Joytick1;
+        private readonly IJoyStick m_Joytick2;
         private ICartridge m_Cartridge;
 
         public Nes()
@@ -34,6 +37,8 @@ namespace NesLib
             m_PPU2C02 = new PPU2C02(m_PPUBus);
             m_VRAM = new VRAM();
             m_Palette = new Palette();
+            m_Joytick1 = new JoyStick.JoyStick();
+            m_Joytick2 = new JoyStick.JoyStick();
         }
 
         public async Task InsertCartidgeAsync(string nesFile)
@@ -50,6 +55,7 @@ namespace NesLib
         {
             m_CPUBus.ConnectRAM(m_RAM);
             m_CPUBus.ConnectPPU(m_PPU2C02);
+            m_CPUBus.ConnectJoyStock(m_Joytick1, m_Joytick2);
             m_PPUBus.ConnectVRAM(m_VRAM);
             m_PPUBus.ConnectPalette(m_Palette);
 
@@ -70,6 +76,8 @@ namespace NesLib
                         m_CPU6502.NMI();
                     }
                     i = 0;
+
+                    Thread.Sleep(10);
                 }
             }
         }
@@ -93,6 +101,21 @@ namespace NesLib
         public int[][] GetBackgroundTileColor(int tx, int ty)
         {
             return m_PPU2C02.GetBackgroundTileColor(tx, ty);
+        }
+
+        public void Down(bool pressDown)
+        {
+            m_Joytick1.Down(pressDown);
+        }
+
+        public void Start(bool pressDown)
+        {
+            m_Joytick1.Start(pressDown);
+        }
+
+        public void Select(bool pressDown)
+        {
+            m_Joytick1.Select(pressDown);
         }
     }
 }

@@ -7,8 +7,8 @@
         mc:Ignorable="d"
         Title="MainWindow" Height="768" Width="1024">
     <Grid>
-        <Button Height="100" Width="200" Click="Button_Click" Margin="535,95,65,240"/>
-        <Button Height="100" Width="200" Click="Button_Click2" Margin="535,260,65,75"/>
+        <Button Height="100" Width="200" Click="Button_Click" Margin="535,95,65,240" Content="载入ROM"/>
+        <Button Height="100" Width="200" Click="Button_Click2" Margin="535,260,65,75" Content="画面"/>
         <Viewbox Width="512" Height="480" Stretch="Fill" HorizontalAlignment="Left">
             <Image Width="256" Height="240" x:Name="img"></Image>
         </Viewbox>
@@ -47,6 +47,9 @@
             <Grid x:Name="grid30"/>
             <Grid x:Name="grid31"/>
         </UniformGrid>
-        <Button Height="100" Width="200" Click="Button_Click3" Margin="647,565,177,88"/>
+        <Button Height="100" Width="200" Click="Button_Click3" Margin="647,565,177,88" Content="调色板数据"/>
+        <Button Height="100" Width="200" PreviewMouseDown="Button_MouseDown" PreviewMouseUp="Button_MouseUp" Margin="880,254,-56,399" Content="下" x:Name="down"/>
+        <Button Height="100" Width="200" PreviewMouseDown="Button_MouseDown" PreviewMouseUp="Button_MouseUp" Margin="880,419,-56,234" Content="start" x:Name="start"/>
+        <Button Height="100" Width="200" PreviewMouseDown="Button_MouseDown" PreviewMouseUp="Button_MouseUp" Margin="880,565,-56,88" Content="select" x:Name="select"/>
     </Grid>
 </Window>

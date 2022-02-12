@@ -57,6 +57,8 @@
     <Compile Include="INes.cs" />
     <Compile Include="IO\IIORegister.cs" />
     <Compile Include="IO\IORegister.cs" />
+    <Compile Include="JoyStick\IJoyStick.cs" />
+    <Compile Include="JoyStick\JoyStick.cs" />
     <Compile Include="Memory\IRAM.cs" />
     <Compile Include="Memory\RAM.cs" />
     <Compile Include="Memory\VRAM.cs" />
