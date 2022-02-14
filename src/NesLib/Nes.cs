@@ -70,12 +70,13 @@ namespace NesLib
                 {
                     //VBLANK
                     m_PPU2C02.STATUS.V = 1;
-
+                    
                     if (m_PPU2C02.CTRL.V == 1)
                     {
                         m_CPU6502.NMI();
                     }
                     i = 0;
+                    m_PPU2C02.STATUS.S = 0;
 
                     Thread.Sleep(10);
                 }

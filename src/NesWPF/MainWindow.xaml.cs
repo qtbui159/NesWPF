@@ -14,6 +14,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using System.Windows.Threading;
 
 namespace NesWPF
 {
@@ -27,15 +28,25 @@ namespace NesWPF
         WriteableBitmap wb = new WriteableBitmap(256, 240, 72, 72, PixelFormats.Pbgra32, null);
         WriteableBitmap wb1 = new WriteableBitmap(256, 240, 72, 72, PixelFormats.Pbgra32, null);
 
+        DispatcherTimer m_Timer = new DispatcherTimer();
+
         public MainWindow()
         {
             InitializeComponent();
+
+            m_Timer.Interval = TimeSpan.FromMilliseconds(100);
+            m_Timer.Tick += M_Timer_Tick;
+        }
+
+        private void M_Timer_Tick(object sender, EventArgs e)
+        {
+            Button_Click4(null, null);
         }
 
         private async void Button_Click(object sender, RoutedEventArgs e)
         {
             //await nes.InsertCartidgeAsync(@"C:\Users\Spike\Desktop\nestest.nes");
-            await nes.InsertCartidgeAsync(@"C:\Users\Spike\Desktop\smb.nes");
+            await nes.InsertCartidgeAsync(@"C:\Users\Spike\Desktop\896.nes");
 
             new Thread(() =>
             {
@@ -96,6 +107,8 @@ namespace NesWPF
             }
 
             wb.Unlock();
+
+            m_Timer.Start();
         }
 
         private void Button_Click3(object sender, RoutedEventArgs e)
@@ -153,6 +166,9 @@ namespace NesWPF
 
         private void Button_Click4(object sender, RoutedEventArgs e)
         {
+
+            
+
             wb1.Lock();
             int[][] rgba = nes.GetSpriteTileColor();
             byte[] data = new byte[8 * 8 * 4];

@@ -265,6 +265,7 @@ namespace NesLib.PPU
                     }
                 }
 
+                STATUS.S = 1;
                 return r;
             }
             return null;
