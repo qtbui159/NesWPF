@@ -24,6 +24,11 @@ namespace NesLib.PPU
         ushort Addr { get; set; }
 
         /// <summary>
+        /// 读缓存
+        /// </summary>
+        byte ReadBuffer { get; set; }
+
+        /// <summary>
         /// 精灵RAM内存，存在PPU内，一共256字节
         /// 不存在总线上，写还可以通过DMA(CPU总线$4014)一次性复制256字节，读写可以直接单字节操作
         /// </summary>
@@ -60,5 +65,11 @@ namespace NesLib.PPU
         /// <param name="ty"></param>
         /// <returns></returns>
         int[][] GetBackgroundTileColor(int tx, int ty);
+
+        /// <summary>
+        /// 获取精灵tile
+        /// </summary>
+        /// <returns></returns>
+        int[][] GetSpriteTileColor();
     }
 }

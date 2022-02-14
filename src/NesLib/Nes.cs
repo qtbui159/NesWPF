@@ -103,6 +103,11 @@ namespace NesLib
             return m_PPU2C02.GetBackgroundTileColor(tx, ty);
         }
 
+        public int[][] GetSpriteTileColor()
+        {
+            return m_PPU2C02.GetSpriteTileColor();
+        }
+
         public void Down(bool pressDown)
         {
             m_Joytick1.Down(pressDown);

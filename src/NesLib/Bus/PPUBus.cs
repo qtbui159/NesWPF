@@ -58,7 +58,8 @@ namespace NesLib.Bus
 
             if (readAddr < 0x2000)
             {
-                throw new Exception("该地址不支持写入操作");
+                //throw new Exception("该地址不支持写入操作");
+                m_Cartridge.CHRRom[readAddr] = data;
             }
             else if (readAddr >= 0x2000 && readAddr < 0x3F00)
             {

@@ -25,6 +25,7 @@ namespace NesWPF
         INes nes = NesFactory.New();
 
         WriteableBitmap wb = new WriteableBitmap(256, 240, 72, 72, PixelFormats.Pbgra32, null);
+        WriteableBitmap wb1 = new WriteableBitmap(256, 240, 72, 72, PixelFormats.Pbgra32, null);
 
         public MainWindow()
         {
@@ -33,8 +34,8 @@ namespace NesWPF
 
         private async void Button_Click(object sender, RoutedEventArgs e)
         {
-            await nes.InsertCartidgeAsync(@"C:\Users\Spike\Desktop\nestest.nes");
-            //await nes.InsertCartidgeAsync(@"C:\Users\Spike\Desktop\896.nes");
+            //await nes.InsertCartidgeAsync(@"C:\Users\Spike\Desktop\nestest.nes");
+            await nes.InsertCartidgeAsync(@"C:\Users\Spike\Desktop\smb.nes");
 
             new Thread(() =>
             {
@@ -42,6 +43,7 @@ namespace NesWPF
             }).Start();
 
             img.Source = wb;
+            img1.Source = wb1;
         }
 
         private void Button_Click2(object sender, RoutedEventArgs e)
@@ -147,6 +149,38 @@ namespace NesWPF
             {
                 nes.Select(false);
             }
+        }
+
+        private void Button_Click4(object sender, RoutedEventArgs e)
+        {
+            wb1.Lock();
+            int[][] rgba = nes.GetSpriteTileColor();
+            byte[] data = new byte[8 * 8 * 4];
+            int count = 0;
+
+            for (int i = 0; i < rgba.Length; ++i)
+            {
+                for (int j = 0; j < rgba[i].Length; ++j)
+                {
+                    byte r = (byte)(rgba[i][j] >> 24);
+                    byte g = (byte)(rgba[i][j] >> 16);
+                    g &= 0xFF;
+                    byte b = (byte)(rgba[i][j] >> 8);
+                    b &= 0xFF;
+                    byte a = (byte)(rgba[i][j] & 0xFF);
+                    data[count++] = b;
+                    data[count++] = g;
+                    data[count++] = r;
+                    data[count++] = a;
+                }
+            }
+
+
+            wb1.WritePixels(new Int32Rect(0 * 8, 0 * 8, 8, 8), data, 8 * 4, 0);
+
+            wb1.Unlock();
+
+            
         }
     }
 }

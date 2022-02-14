@@ -13,6 +13,7 @@ using Utils;
  * 参考资料
  * 1*)https://wiki.nesdev.org/w/index.php?title=PPU_registers#PPUSCROLL
  * 2*)https://wiki.nesdev.org/w/index.php?title=PPU_registers#Address_.28.242006.29_.3E.3E_write_x2
+ * 3*)https://wiki.nesdev.org/w/index.php/PPU_registers#The_PPUDATA_read_buffer_.28post-fetch.29
  */
 namespace NesLib.Bus
 {
@@ -89,8 +90,10 @@ namespace NesLib.Bus
                     }
                     else if (ioRealAddr == 0x2007)
                     {
+                        //参考资料4*),这里读取的永远都是缓存值
+                        byte oldData = m_PPU.ReadBuffer;
                         byte data = m_PPU.ReadByte(m_PPU.Addr);
-
+                        m_PPU.ReadBuffer = data;
                         if (m_PPU.CTRL.I == 1)
                         {
                             m_PPU.Addr += 32;
@@ -99,7 +102,7 @@ namespace NesLib.Bus
                         {
                             m_PPU.Addr += 1;
                         }
-                        return data;
+                        return oldData;
                     }
                     else
                     {

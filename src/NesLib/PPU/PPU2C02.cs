@@ -13,6 +13,7 @@ using Utils;
 //3*)https://wiki.nesdev.org/w/index.php?title=PPU_nametables
 //4*)https://wiki.nesdev.org/w/index.php?title=PPU_attribute_tables
 //5*)https://wiki.nesdev.org/w/index.php?title=PPU_pattern_tables
+//6*)https://wiki.nesdev.org/w/index.php/PPU_registers#The_PPUDATA_read_buffer_.28post-fetch.29
 
 namespace NesLib.PPU
 {
@@ -33,6 +34,7 @@ namespace NesLib.PPU
 
         public byte OAMAddr { get; set; }
         public bool WriteX2Flag { get; set; }
+        public byte ReadBuffer { get; set; }
 
         public PPU2C02(IPPUBus ppuBus)
         {
@@ -53,7 +55,14 @@ namespace NesLib.PPU
 
         public byte ReadByte(ushort addr)
         {
-            return m_PPUBus.ReadByte(addr);
+            byte data = m_PPUBus.ReadByte(addr);
+            if (addr >= 0x3F00 && addr < 0x4000)
+            {
+                //根据参考资料6，实现更新ReadBuffer
+                ReadBuffer = data;
+            }
+
+            return data;
         }
 
         public int GetBackgroundPixel(int x, int y)
@@ -221,6 +230,44 @@ namespace NesLib.PPU
             }
 
             return r;
+        }
+
+        public int[][] GetSpriteTileColor()
+        {
+            if (CTRL.H == 0)
+            {
+                int block = 0 * 4;
+                int y = OAM[block];
+                int x = OAM[block + 3];
+                int offset = 0;
+                if (CTRL.S == 1)
+                {
+                    offset = 0x1000;
+                }
+
+                offset += OAM[block + 1] * 16;
+                byte[] patternData = ReadBlock((ushort)offset, 16);
+                byte[] lowPatternData = patternData.Take(8).ToArray();
+                byte[] highPatternData = patternData.Skip(8).ToArray();
+                byte highPalette = (byte)((OAM[block + 2] & 0x3) << 2);
+
+                int[][] r = new int[8][];
+                for (int i = 0; i < lowPatternData.Length; ++i)
+                {
+                    r[i] = new int[8];
+
+                    for (int j = 7; j >= 0; --j)
+                    {
+                        int bit0 = BitService.GetBit(lowPatternData[i], j);
+                        int bit1 = BitService.GetBit(highPatternData[i], j);
+                        int paletteOffset = highPalette | (bit1 << 1) | bit0;
+                        r[i][7 - j] = GetBackgroundColor(paletteOffset);
+                    }
+                }
+
+                return r;
+            }
+            return null;
         }
 
         private byte[] ReadBlock(ushort addr, int length)

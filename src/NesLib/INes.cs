@@ -46,5 +46,11 @@ namespace NesLib
         /// </summary>
         /// <returns></returns>
         int[] GetPalette();
+
+        /// <summary>
+        /// 获取精灵tile
+        /// </summary>
+        /// <returns></returns>
+        int[][] GetSpriteTileColor();
     }
 }
