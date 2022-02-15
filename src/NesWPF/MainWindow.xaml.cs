@@ -34,7 +34,7 @@ namespace NesWPF
         {
             InitializeComponent();
 
-            m_Timer.Interval = TimeSpan.FromMilliseconds(100);
+            m_Timer.Interval = TimeSpan.FromMilliseconds(20);
             m_Timer.Tick += M_Timer_Tick;
         }
 
@@ -166,37 +166,36 @@ namespace NesWPF
 
         private void Button_Click4(object sender, RoutedEventArgs e)
         {
-
-            
-
             wb1.Lock();
-            int[][] rgba = nes.GetSpriteTileColor();
-            byte[] data = new byte[8 * 8 * 4];
-            int count = 0;
-
-            for (int i = 0; i < rgba.Length; ++i)
+            for (int block = 63; block >= 0; --block)
             {
-                for (int j = 0; j < rgba[i].Length; ++j)
+                int[][] rgba = nes.GetSpriteTileColor(block, out int x, out int y);
+                if (y >= 0xEF || x >= 0xF9)
                 {
-                    byte r = (byte)(rgba[i][j] >> 24);
-                    byte g = (byte)(rgba[i][j] >> 16);
-                    g &= 0xFF;
-                    byte b = (byte)(rgba[i][j] >> 8);
-                    b &= 0xFF;
-                    byte a = (byte)(rgba[i][j] & 0xFF);
-                    data[count++] = b;
-                    data[count++] = g;
-                    data[count++] = r;
-                    data[count++] = a;
+                    continue;
                 }
+                byte[] data = new byte[8 * 8 * 4];
+                int count = 0;
+
+                for (int i = 0; i < rgba.Length; ++i)
+                {
+                    for (int j = 0; j < rgba[i].Length; ++j)
+                    {
+                        byte r = (byte)(rgba[i][j] >> 24);
+                        byte g = (byte)(rgba[i][j] >> 16);
+                        g &= 0xFF;
+                        byte b = (byte)(rgba[i][j] >> 8);
+                        b &= 0xFF;
+                        byte a = (byte)(rgba[i][j] & 0xFF);
+                        data[count++] = b;
+                        data[count++] = g;
+                        data[count++] = r;
+                        data[count++] = a;
+                    }
+                }
+                wb1.WritePixels(new Int32Rect(x, y, 8, 8), data, 8 * 4, 0);
             }
-
-
-            wb1.WritePixels(new Int32Rect(0 * 8, 0 * 8, 8, 8), data, 8 * 4, 0);
-
             wb1.Unlock();
-
-            
         }
     }
 }

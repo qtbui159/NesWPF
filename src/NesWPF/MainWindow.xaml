@@ -5,14 +5,12 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:NesWPF"
         mc:Ignorable="d"
-        Title="MainWindow" Height="1224" Width="1280">
+        Title="MainWindow" Height="1000" Width="1500">
     <Grid>
-        <Button Height="100" Width="200" Click="Button_Click" Margin="535,95,65,240" Content="载入ROM"/>
-        <Button Height="100" Width="200" Click="Button_Click2" Margin="535,260,65,75" Content="画面"/>
-        <Viewbox Width="512" Height="480" Stretch="Fill" HorizontalAlignment="Left" Margin="0,117,0,412">
+        <Viewbox Width="512" Height="480" Stretch="Fill" HorizontalAlignment="Left">
             <Image Width="256" Height="240" x:Name="img"></Image>
         </Viewbox>
-        <Viewbox Width="512" Height="480" Stretch="Fill" HorizontalAlignment="Left" Margin="0,719,0,10">
+        <Viewbox Width="512" Height="480" Stretch="Fill" HorizontalAlignment="Left">
             <Image Width="256" Height="240" x:Name="img1"></Image>
         </Viewbox>
         <UniformGrid Height="100" VerticalAlignment="Top" Columns="16" Rows="2">
@@ -50,10 +48,12 @@
             <Grid x:Name="grid30"/>
             <Grid x:Name="grid31"/>
         </UniformGrid>
-        <Button Height="100" Width="200" Click="Button_Click3" Margin="647,565,177,88" Content="调色板数据"/>
+        <Button Height="100" Width="200" Click="Button_Click" Margin="90,676,1210,209" Content="载入ROM"/>
+        <Button Height="100" Width="200" Click="Button_Click2" Margin="322,671,978,214" Content="画面"/>
+        <Button Height="100" Width="200" Click="Button_Click3" Margin="570,681,730,204" Content="调色板数据"/>
         <Button Height="100" Width="200" PreviewMouseDown="Button_MouseDown" PreviewMouseUp="Button_MouseUp" Margin="880,254,-56,399" Content="下" x:Name="down"/>
         <Button Height="100" Width="200" PreviewMouseDown="Button_MouseDown" PreviewMouseUp="Button_MouseUp" Margin="880,419,-56,234" Content="start" x:Name="start"/>
         <Button Height="100" Width="200" PreviewMouseDown="Button_MouseDown" PreviewMouseUp="Button_MouseUp" Margin="880,565,-56,88" Content="select" x:Name="select"/>
-        <Button Height="100" Width="200" Click="Button_Click4" Margin="775,825,305,84" Content="精灵"/>
+        <Button Height="100" Width="200" Click="Button_Click4" Margin="826,681,474,204" Content="精灵"/>
     </Grid>
 </Window>

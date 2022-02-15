@@ -14,6 +14,8 @@ using Utils;
 //4*)https://wiki.nesdev.org/w/index.php?title=PPU_attribute_tables
 //5*)https://wiki.nesdev.org/w/index.php?title=PPU_pattern_tables
 //6*)https://wiki.nesdev.org/w/index.php/PPU_registers#The_PPUDATA_read_buffer_.28post-fetch.29
+//7*)https://wiki.nesdev.org/w/index.php?title=Sprite_overflow_games
+//8*)https://wiki.nesdev.org/w/index.php?title=PPU_sprite_evaluation
 
 namespace NesLib.PPU
 {
@@ -29,6 +31,10 @@ namespace NesLib.PPU
 
         public ushort Addr { get; set; }
 
+        /// <summary>
+        /// 这里只实现了一级OAM，实际PPU中还有一个二级OAM，和sprite overflow bug息息相关
+        /// 参考资料7*,8*
+        /// </summary>
         public byte[] OAM => m_OAM;
         private byte[] m_OAM;
 
@@ -232,13 +238,13 @@ namespace NesLib.PPU
             return r;
         }
 
-        public int[][] GetSpriteTileColor()
+        public int[][] GetSpriteTileColor(int count, out int x, out int y)
         {
             if (CTRL.H == 0)
             {
-                int block = 0 * 4;
-                int y = OAM[block];
-                int x = OAM[block + 3];
+                int block = count * 4;
+                y = OAM[block];
+                x = OAM[block + 3];
                 int offset = 0;
                 if (CTRL.S == 1)
                 {
@@ -261,13 +267,18 @@ namespace NesLib.PPU
                         int bit0 = BitService.GetBit(lowPatternData[i], j);
                         int bit1 = BitService.GetBit(highPatternData[i], j);
                         int paletteOffset = highPalette | (bit1 << 1) | bit0;
-                        r[i][7 - j] = GetBackgroundColor(paletteOffset);
+                        r[i][7 - j] = GetSpriteColor(paletteOffset);
                     }
                 }
 
-                STATUS.S = 1;
+                if (count == 0)
+                { 
+                    STATUS.S = 1;
+                }
                 return r;
             }
+            x = 0;
+            y = 0;
             return null;
         }
 
@@ -332,6 +343,12 @@ namespace NesLib.PPU
         private int GetBackgroundColor(int paletteOffset)
         {
             byte offset = m_PPUBus.ReadByte((ushort)(0x3F00 + paletteOffset));
+            return Palette.GetRGBAColor(offset);
+        }
+
+        private int GetSpriteColor(int paletteOffset)
+        {
+            byte offset = m_PPUBus.ReadByte((ushort)(0x3F10 + paletteOffset));
             return Palette.GetRGBAColor(offset);
         }
     }

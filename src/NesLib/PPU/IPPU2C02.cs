@@ -70,6 +70,6 @@ namespace NesLib.PPU
         /// 获取精灵tile
         /// </summary>
         /// <returns></returns>
-        int[][] GetSpriteTileColor();
+        int[][] GetSpriteTileColor(int count, out int x, out int y);
     }
 }

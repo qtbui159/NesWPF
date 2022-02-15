@@ -5,6 +5,11 @@ using System.Text;
 using System.Threading.Tasks;
 using Utils;
 
+/**
+ * 参考资料
+ * 1*)https://wiki.nesdev.org/w/index.php?title=PPU_sprite_evaluation#Sprite_overflow_bug
+ */
+
 namespace NesLib.PPU
 {
     class STATUSRegister
@@ -13,7 +18,7 @@ namespace NesLib.PPU
 
         /// <summary>
         /// 精灵溢出标志位
-        /// 0(当前扫描线精灵个数小于8)，注意，该位有硬件bug
+        /// 0(当前扫描线精灵个数小于8)，注意，该位有硬件bug，参考1*)
         /// 
         /// Sprite overflow. The intent was for this flag to be set
         /// whenever more than eight sprites appear on a scanline, but a

@@ -104,9 +104,9 @@ namespace NesLib
             return m_PPU2C02.GetBackgroundTileColor(tx, ty);
         }
 
-        public int[][] GetSpriteTileColor()
+        public int[][] GetSpriteTileColor(int count, out int x, out int y)
         {
-            return m_PPU2C02.GetSpriteTileColor();
+            return m_PPU2C02.GetSpriteTileColor(count, out x, out y);
         }
 
         public void Down(bool pressDown)
