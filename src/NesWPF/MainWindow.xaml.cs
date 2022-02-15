@@ -34,7 +34,7 @@ namespace NesWPF
         {
             InitializeComponent();
 
-            m_Timer.Interval = TimeSpan.FromMilliseconds(20);
+            m_Timer.Interval = TimeSpan.FromMilliseconds(10);
             m_Timer.Tick += M_Timer_Tick;
         }
 
@@ -108,7 +108,10 @@ namespace NesWPF
 
             wb.Unlock();
 
-            m_Timer.Start();
+            if (!m_Timer.IsEnabled)
+            {
+                m_Timer.Start();
+            }
         }
 
         private void Button_Click3(object sender, RoutedEventArgs e)
@@ -166,6 +169,7 @@ namespace NesWPF
 
         private void Button_Click4(object sender, RoutedEventArgs e)
         {
+            m_Timer.Stop();
             wb1.Lock();
             for (int block = 63; block >= 0; --block)
             {
@@ -196,6 +200,7 @@ namespace NesWPF
                 wb1.WritePixels(new Int32Rect(x, y, 8, 8), data, 8 * 4, 0);
             }
             wb1.Unlock();
+            m_Timer.Start();
         }
     }
 }

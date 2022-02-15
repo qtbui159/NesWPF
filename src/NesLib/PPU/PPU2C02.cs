@@ -256,7 +256,8 @@ namespace NesLib.PPU
                 byte[] lowPatternData = patternData.Take(8).ToArray();
                 byte[] highPatternData = patternData.Skip(8).ToArray();
                 byte highPalette = (byte)((OAM[block + 2] & 0x3) << 2);
-
+                byte horizentalFlip = BitService.GetBit(OAM[block + 2], 6);
+                byte verticalFlip = BitService.GetBit(OAM[block + 2], 7);
                 int[][] r = new int[8][];
                 for (int i = 0; i < lowPatternData.Length; ++i)
                 {
@@ -274,6 +275,15 @@ namespace NesLib.PPU
                 if (count == 0)
                 { 
                     STATUS.S = 1;
+                }
+
+                if (horizentalFlip == 1)
+                {
+                    r = HorizentalFlip(r);
+                }
+                if (verticalFlip == 1)
+                {
+                    r = VerticalFlip(r);
                 }
                 return r;
             }
@@ -350,6 +360,42 @@ namespace NesLib.PPU
         {
             byte offset = m_PPUBus.ReadByte((ushort)(0x3F10 + paletteOffset));
             return Palette.GetRGBAColor(offset);
+        }
+
+        private int[][] HorizentalFlip(int[][] data)
+        {
+            for (int y = 0; y < 8; ++y)
+            {
+                for (int x = 0; x < 4; ++x)
+                {
+                    if (data[y][x] != data[y][7 - x])
+                    {
+                        int tmp = data[y][7 - x];
+                        data[y][7 - x] = data[y][x];
+                        data[y][x] = tmp;
+                    }
+                }
+            }
+
+            return data;
+        }
+
+        private int[][] VerticalFlip(int[][] data)
+        {
+            for (int y = 0; y < 8; ++y)
+            {
+                for (int x = 0; x < 4; ++x)
+                {
+                    if (data[y][x] != data[7 - y][x])
+                    {
+                        int tmp = data[7 - y][x];
+                        data[7 - y][x] = data[y][x];
+                        data[y][x] = tmp;
+                    }
+                }
+            }
+
+            return data;
         }
     }
 }
