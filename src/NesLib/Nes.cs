@@ -60,13 +60,12 @@ namespace NesLib
             m_PPUBus.ConnectPalette(m_Palette);
 
             m_CPU6502.RESET();
-            int i = 0;
+
             while (true)
             {
-                ++i;
                 m_CPU6502.TickTock();
 
-                if (i >= 10000)
+                if (m_CPU6502.Cycles >= 29780)
                 {
                     //VBLANK
                     m_PPU2C02.STATUS.V = 1;
@@ -75,10 +74,8 @@ namespace NesLib
                     {
                         m_CPU6502.NMI();
                     }
-                    i = 0;
+                    m_CPU6502.Cycles = 0;
                     m_PPU2C02.STATUS.S = 0;
-
-                    Thread.Sleep(10);
                 }
             }
         }
@@ -107,6 +104,11 @@ namespace NesLib
         public int[][] GetSpriteTileColor(int count, out int x, out int y)
         {
             return m_PPU2C02.GetSpriteTileColor(count, out x, out y);
+        }
+
+        public int[][] PaintFrame()
+        {
+            return m_PPU2C02.PaintFrame();
         }
 
         public void Down(bool pressDown)

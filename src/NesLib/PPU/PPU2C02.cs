@@ -292,6 +292,118 @@ namespace NesLib.PPU
             return null;
         }
 
+        private int[][] GetSpriteTileColor(int count, out int x, out int y, out bool visible)
+        {
+            if (CTRL.H == 0)
+            {
+                int block = count * 4;
+                y = OAM[block];
+                x = OAM[block + 3];
+                int offset = 0;
+                if (CTRL.S == 1)
+                {
+                    offset = 0x1000;
+                }
+
+                offset += OAM[block + 1] * 16;
+                byte[] patternData = ReadBlock((ushort)offset, 16);
+                byte[] lowPatternData = patternData.Take(8).ToArray();
+                byte[] highPatternData = patternData.Skip(8).ToArray();
+                byte highPalette = (byte)((OAM[block + 2] & 0x3) << 2);
+                byte horizentalFlip = BitService.GetBit(OAM[block + 2], 6);
+                byte verticalFlip = BitService.GetBit(OAM[block + 2], 7);
+                int[][] r = new int[8][];
+                for (int i = 0; i < lowPatternData.Length; ++i)
+                {
+                    r[i] = new int[8];
+
+                    for (int j = 7; j >= 0; --j)
+                    {
+                        int bit0 = BitService.GetBit(lowPatternData[i], j);
+                        int bit1 = BitService.GetBit(highPatternData[i], j);
+                        int paletteOffset = highPalette | (bit1 << 1) | bit0;
+                        r[i][7 - j] = GetSpriteColor(paletteOffset);
+                    }
+                }
+
+                if (count == 0)
+                {
+                    STATUS.S = 1;
+                }
+
+                if (horizentalFlip == 1)
+                {
+                    r = HorizentalFlip(r);
+                }
+                if (verticalFlip == 1)
+                {
+                    r = VerticalFlip(r);
+                }
+                visible = BitService.GetBit(OAM[block + 2], 5) == 0;
+                return r;
+            }
+            x = 0;
+            y = 0;
+            visible = false;
+            return null;
+        }
+
+        public int[][] PaintFrame()
+        {
+            int bbb = Palette.UniversalBackgroundColor;
+
+            int[][] frame = new int[240][];
+            for (int i = 0; i < 240; ++i)
+            {
+                frame[i] = new int[256];
+            }
+
+            //1.先取出背景
+            for (int ty = 0; ty < 30; ++ty)
+            {
+                for (int tx = 0; tx < 32; ++tx)
+                {
+                    int[][] tile = GetBackgroundTileColor(tx, ty);
+
+                    for (int y = 0; y < 8; ++y)
+                    {
+                        Array.Copy(tile[y], 0, frame[ty * 8 + y], tx * 8, 8);
+                    }
+                }
+            }
+
+            //2.取出精灵
+            for (int i = 63; i >= 0; --i)
+            {
+                int[][] sprite = GetSpriteTileColor(i, out int x, out int y, out bool visible);
+                if (!visible)
+                {
+                    continue;
+                }
+                if (y >= 0xEF || x >= 0xF9)
+                {
+                    continue;
+                }
+
+                //for (int py = 0; py < 8; ++py)
+                //{
+                //    Array.Copy(sprite[py], 0, frame[y + py], x, 8);
+                //}
+                for (int py = 0; py < 8; ++py)
+                {
+                    for (int px = 0; px < 8; ++px)
+                    {
+                        if (sprite[py][px] != bbb)
+                        {
+                            frame[y + py][x + px] = sprite[py][px];
+                        }
+                    }
+                }
+            }
+
+            return frame;
+        }
+
         private byte[] ReadBlock(ushort addr, int length)
         {
             byte[] r = new byte[length];
@@ -359,7 +471,8 @@ namespace NesLib.PPU
         private int GetSpriteColor(int paletteOffset)
         {
             byte offset = m_PPUBus.ReadByte((ushort)(0x3F10 + paletteOffset));
-            return Palette.GetRGBAColor(offset);
+            int value = Palette.GetRGBAColor(offset);
+            return value;
         }
 
         private int[][] HorizentalFlip(int[][] data)

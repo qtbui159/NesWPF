@@ -8,6 +8,8 @@ namespace NesLib.CPU
 {
     interface ICPU6502
     {
+        long Cycles { get; set; }
+
         /// <summary>
         /// 执行一条指令
         /// </summary>

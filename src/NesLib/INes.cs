@@ -52,5 +52,11 @@ namespace NesLib
         /// </summary>
         /// <returns></returns>
         int[][] GetSpriteTileColor(int count, out int x, out int y);
+
+        /// <summary>
+        /// 画一帧
+        /// </summary>
+        /// <returns></returns>
+        int[][] PaintFrame();
     }
 }

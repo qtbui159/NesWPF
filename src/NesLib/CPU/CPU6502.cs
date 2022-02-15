@@ -21,7 +21,7 @@ namespace NesLib.CPU
         private ICPUBus m_CPUBus;
         private readonly Dictionary<int, Action<byte>> m_OPCodeMapImpl;
 
-        private long m_Cycles = 0;
+        public long Cycles { get; set; }
 
         /// <summary>
         /// 累加寄存器
@@ -216,58 +216,58 @@ namespace NesLib.CPU
             if (opCode == 0x69)
             {
                 addr = Immediate();
-                m_Cycles += 2;
+                Cycles += 2;
             }
             else if (opCode == 0x65)
             {
                 addr = ZeroPage();
-                m_Cycles += 3;
+                Cycles += 3;
             }
             else if (opCode == 0x75)
             {
                 addr = ZeroPageX();
-                m_Cycles += 4;
+                Cycles += 4;
             }
             else if (opCode == 0x6d)
             {
                 addr = Absolute();
-                m_Cycles += 4;
+                Cycles += 4;
             }
             else if (opCode == 0x7d)
             {
                 addr = AbsoluteX(out bool crossPage);
-                m_Cycles += 4;
+                Cycles += 4;
 
                 if (crossPage)
                 {
                     //跨页了
-                    m_Cycles += 1;
+                    Cycles += 1;
                 }
             }
             else if (opCode == 0x79)
             {
                 addr = AbsoluteY(out bool crossPage);
-                m_Cycles += 4;
+                Cycles += 4;
 
                 if (crossPage)
                 {
                     //跨页了
-                    m_Cycles += 1;
+                    Cycles += 1;
                 }
             }
             else if (opCode == 0x61)
             {
                 addr = IndexedIndirect();
-                m_Cycles += 6;
+                Cycles += 6;
             }
             else if (opCode == 0x71)
             {
                 addr = IndirectIndexed(out bool crossPage);
-                m_Cycles += 5;
+                Cycles += 5;
 
                 if (crossPage)
                 {
-                    m_Cycles += 1;
+                    Cycles += 1;
                 }
             }
             else
@@ -299,56 +299,56 @@ namespace NesLib.CPU
             if (opCode == 0x29)
             {
                 addr = Immediate();
-                m_Cycles += 2;
+                Cycles += 2;
             }
             else if (opCode == 0x25)
             {
                 addr = ZeroPage();
-                m_Cycles += 3;
+                Cycles += 3;
             }
             else if (opCode == 0x35)
             {
                 addr = ZeroPageX();
-                m_Cycles += 4;
+                Cycles += 4;
             }
             else if (opCode == 0x2D)
             {
                 addr = Absolute();
-                m_Cycles += 4;
+                Cycles += 4;
             }
             else if (opCode == 0x3D)
             {
                 addr = AbsoluteX(out bool crossPage);
 
-                m_Cycles += 4;
+                Cycles += 4;
                 if (crossPage)
                 {
-                    m_Cycles += 1;
+                    Cycles += 1;
                 }
             }
             else if (opCode == 0x39)
             {
                 addr = AbsoluteY(out bool crossPage);
 
-                m_Cycles += 4;
+                Cycles += 4;
                 if (crossPage)
                 {
-                    m_Cycles += 1;
+                    Cycles += 1;
                 }
             }
             else if (opCode == 0x21)
             {
                 addr = IndexedIndirect();
-                m_Cycles += 6;
+                Cycles += 6;
             }
             else if (opCode == 0x31)
             {
                 addr = IndirectIndexed(out bool crossPage);
 
-                m_Cycles += 5;
+                Cycles += 5;
                 if (crossPage)
                 {
-                    m_Cycles += 1;
+                    Cycles += 1;
                 }
             }
             else
@@ -382,28 +382,28 @@ namespace NesLib.CPU
                 P.ZeroFlag = BoolToBit(A == 0);
                 P.NegativeFlag = BitService.GetBit(A, 7);
                 P.CarryFlag = newCarryFlag;
-                m_Cycles += 2;
+                Cycles += 2;
                 return;
             }
             else if (opCode == 0x06)
             {
                 addr = ZeroPage();
-                m_Cycles += 5;
+                Cycles += 5;
             }
             else if (opCode == 0x16)
             {
                 addr = ZeroPageX();
-                m_Cycles += 6;
+                Cycles += 6;
             }
             else if (opCode == 0x0E)
             {
                 addr = Absolute();
-                m_Cycles += 6;
+                Cycles += 6;
             }
             else if (opCode == 0x1E)
             {
                 addr = AbsoluteX(out _);
-                m_Cycles += 7;
+                Cycles += 7;
             }
             else
             {
@@ -431,15 +431,15 @@ namespace NesLib.CPU
             if (opCode == 0x90)
             {
                 ushort offset = Relative();
-                m_Cycles += 2;
+                Cycles += 2;
                 if (P.CarryFlag == 0)
                 {
-                    m_Cycles += 1;
+                    Cycles += 1;
 
                     ushort newAddr = (ushort)(PC + (sbyte)offset);
                     if (IsCrossPage(newAddr, PC))
                     {
-                        m_Cycles += 1;
+                        Cycles += 1;
                     }
                     PC = newAddr;
                 }
@@ -459,15 +459,15 @@ namespace NesLib.CPU
             if (opCode == 0xB0)
             {
                 ushort offset = Relative();
-                m_Cycles += 2;
+                Cycles += 2;
                 if (P.CarryFlag == 1)
                 {
-                    m_Cycles += 1;
+                    Cycles += 1;
 
                     ushort newAddr = (ushort)(PC + (sbyte)offset);
                     if (IsCrossPage(newAddr, PC))
                     {
-                        m_Cycles += 1;
+                        Cycles += 1;
                     }
                     PC = newAddr;
                 }
@@ -488,15 +488,15 @@ namespace NesLib.CPU
             if (opCode == 0xF0)
             {
                 ushort offset = Relative();
-                m_Cycles += 2;
+                Cycles += 2;
                 if (P.ZeroFlag == 1)
                 {
-                    m_Cycles += 1;
+                    Cycles += 1;
 
                     ushort newAddr = (ushort)(PC + (sbyte)offset);
                     if (IsCrossPage(newAddr, PC))
                     {
-                        m_Cycles += 1;
+                        Cycles += 1;
                     }
                     PC = newAddr;
                 }
@@ -520,12 +520,12 @@ namespace NesLib.CPU
             if (opCode == 0x24)
             {
                 addr = ZeroPage();
-                m_Cycles += 3;
+                Cycles += 3;
             }
             else if (opCode == 0x2C)
             {
                 addr = Absolute();
-                m_Cycles += 4;
+                Cycles += 4;
             }
             else
             {
@@ -548,15 +548,15 @@ namespace NesLib.CPU
             if (opCode == 0x30)
             {
                 ushort offset = Relative();
-                m_Cycles += 2;
+                Cycles += 2;
                 if (P.NegativeFlag == 1)
                 {
-                    m_Cycles += 1;
+                    Cycles += 1;
 
                     ushort newAddr = (ushort)(PC + (sbyte)offset);
                     if (IsCrossPage(newAddr, PC))
                     {
-                        m_Cycles += 1;
+                        Cycles += 1;
                     }
                     PC = newAddr;
                 }
@@ -576,15 +576,15 @@ namespace NesLib.CPU
             if (opCode == 0xD0)
             {
                 ushort offset = Relative();
-                m_Cycles += 2;
+                Cycles += 2;
                 if (P.ZeroFlag == 0)
                 {
-                    m_Cycles += 1;
+                    Cycles += 1;
 
                     ushort newAddr = (ushort)(PC + (sbyte)offset);
                     if (IsCrossPage(newAddr, PC))
                     {
-                        m_Cycles += 1;
+                        Cycles += 1;
                     }
                     PC = newAddr;
                 }
@@ -604,15 +604,15 @@ namespace NesLib.CPU
             if (opCode == 0x10)
             {
                 ushort offset = Relative();
-                m_Cycles += 2;
+                Cycles += 2;
                 if (P.NegativeFlag == 0)
                 {
-                    m_Cycles += 1;
+                    Cycles += 1;
 
                     ushort newAddr = (ushort)(PC + (sbyte)offset);
                     if (IsCrossPage(newAddr, PC))
                     {
-                        m_Cycles += 1;
+                        Cycles += 1;
                     }
                     PC = newAddr;
                 }
@@ -642,7 +642,7 @@ namespace NesLib.CPU
 
                 P.BreakCommand = 1;
                 P.InterruptDisable = 1;
-                m_Cycles += 7;
+                Cycles += 7;
 
                 PC = ReadWord(0xFFFE);
             }
@@ -661,15 +661,15 @@ namespace NesLib.CPU
             if (opCode == 0x50)
             {
                 ushort offset = Relative();
-                m_Cycles += 2;
+                Cycles += 2;
                 if (P.OverflowFlag == 0)
                 {
-                    m_Cycles += 1;
+                    Cycles += 1;
 
                     ushort newAddr = (ushort)(PC + offset);
                     if (IsCrossPage(newAddr, PC))
                     {
-                        m_Cycles += 1;
+                        Cycles += 1;
                     }
                     PC = newAddr;
                 }
@@ -690,15 +690,15 @@ namespace NesLib.CPU
             if (opCode == 0x70)
             {
                 ushort offset = Relative();
-                m_Cycles += 2;
+                Cycles += 2;
                 if (P.OverflowFlag == 1)
                 {
-                    m_Cycles += 1;
+                    Cycles += 1;
 
                     ushort newAddr = (ushort)(PC + (sbyte)offset);
                     if (IsCrossPage(newAddr, PC))
                     {
-                        m_Cycles += 1;
+                        Cycles += 1;
                     }
                     PC = newAddr;
                 }
@@ -718,7 +718,7 @@ namespace NesLib.CPU
             if (opCode == 0x18)
             {
                 P.CarryFlag = 0;
-                m_Cycles += 2;
+                Cycles += 2;
             }
             else
             {
@@ -735,7 +735,7 @@ namespace NesLib.CPU
             if (opCode == 0xD8)
             {
                 P.DecimalMode = 0;
-                m_Cycles += 2;
+                Cycles += 2;
             }
             else
             {
@@ -752,7 +752,7 @@ namespace NesLib.CPU
             if (opCode == 0x58)
             {
                 P.InterruptDisable = 0;
-                m_Cycles += 2;
+                Cycles += 2;
             }
             else
             {
@@ -769,7 +769,7 @@ namespace NesLib.CPU
             if (opCode == 0xB8)
             {
                 P.OverflowFlag = 0;
-                m_Cycles += 2;
+                Cycles += 2;
             }
             else
             {
@@ -788,56 +788,56 @@ namespace NesLib.CPU
             if (opCode == 0xC9)
             {
                 addr = Immediate();
-                m_Cycles += 2;
+                Cycles += 2;
             }
             else if (opCode == 0xC5)
             {
                 addr = ZeroPage();
-                m_Cycles += 3;
+                Cycles += 3;
             }
             else if (opCode == 0xD5)
             {
                 addr = ZeroPageX();
-                m_Cycles += 4;
+                Cycles += 4;
             }
             else if (opCode == 0xCD)
             {
                 addr = Absolute();
-                m_Cycles += 4;
+                Cycles += 4;
             }
             else if (opCode == 0xDD)
             {
                 addr = AbsoluteX(out bool crossPage);
-                m_Cycles += 4;
+                Cycles += 4;
 
                 if (crossPage)
                 {
-                    m_Cycles += 1;
+                    Cycles += 1;
                 }
             }
             else if (opCode == 0xD9)
             {
                 addr = AbsoluteY(out bool crossPage);
-                m_Cycles += 4;
+                Cycles += 4;
 
                 if (crossPage)
                 {
-                    m_Cycles += 1;
+                    Cycles += 1;
                 }
             }
             else if (opCode == 0xC1)
             {
                 addr = IndexedIndirect();
-                m_Cycles += 6;
+                Cycles += 6;
             }
             else if (opCode == 0xD1)
             {
                 addr = IndirectIndexed(out bool crossPage);
-                m_Cycles += 5;
+                Cycles += 5;
 
                 if (crossPage)
                 {
-                    m_Cycles += 1;
+                    Cycles += 1;
                 }
             }
             else
@@ -865,17 +865,17 @@ namespace NesLib.CPU
             if (opCode == 0xE0)
             {
                 addr = Immediate();
-                m_Cycles += 2;
+                Cycles += 2;
             }
             else if (opCode == 0xE4)
             {
                 addr = ZeroPage();
-                m_Cycles += 3;
+                Cycles += 3;
             }
             else if (opCode == 0xEC)
             {
                 addr = Absolute();
-                m_Cycles += 4;
+                Cycles += 4;
             }
             else
             {
@@ -902,17 +902,17 @@ namespace NesLib.CPU
             if (opCode == 0xC0)
             {
                 addr = Immediate();
-                m_Cycles += 2;
+                Cycles += 2;
             }
             else if (opCode == 0xC4)
             {
                 addr = ZeroPage();
-                m_Cycles += 3;
+                Cycles += 3;
             }
             else if (opCode == 0xCC)
             {
                 addr = Absolute();
-                m_Cycles += 4;
+                Cycles += 4;
             }
             else
             {
@@ -938,22 +938,22 @@ namespace NesLib.CPU
             if (opCode == 0xC6)
             {
                 addr = ZeroPage();
-                m_Cycles += 5;
+                Cycles += 5;
             }
             else if (opCode == 0xD6)
             {
                 addr = ZeroPageX();
-                m_Cycles += 6;
+                Cycles += 6;
             }
             else if (opCode == 0xCE)
             {
                 addr = Absolute();
-                m_Cycles += 6;
+                Cycles += 6;
             }
             else if (opCode == 0xDE)
             {
                 addr = AbsoluteX(out _);
-                m_Cycles += 7;
+                Cycles += 7;
             }
             else
             {
@@ -982,7 +982,7 @@ namespace NesLib.CPU
 
                 P.ZeroFlag = BoolToBit(X == 0);
                 P.NegativeFlag = BitService.GetBit(X, 7);
-                m_Cycles += 2;
+                Cycles += 2;
             }
             else
             {
@@ -1004,7 +1004,7 @@ namespace NesLib.CPU
 
                 P.ZeroFlag = BoolToBit(Y == 0);
                 P.NegativeFlag = BitService.GetBit(Y, 7);
-                m_Cycles += 2;
+                Cycles += 2;
             }
             else
             {
@@ -1023,53 +1023,53 @@ namespace NesLib.CPU
             if (opCode == 0x49)
             {
                 addr = Immediate();
-                m_Cycles += 2;
+                Cycles += 2;
             }
             else if (opCode == 0x45)
             {
                 addr = ZeroPage();
-                m_Cycles += 3;
+                Cycles += 3;
             }
             else if (opCode == 0x55)
             {
                 addr = ZeroPageX();
-                m_Cycles += 4;
+                Cycles += 4;
             }
             else if (opCode == 0x4D)
             {
                 addr = Absolute();
-                m_Cycles += 4;
+                Cycles += 4;
             }
             else if (opCode == 0x5D)
             {
                 addr = AbsoluteX(out bool crossPage);
-                m_Cycles += 4;
+                Cycles += 4;
                 if (crossPage)
                 {
-                    m_Cycles += 1;
+                    Cycles += 1;
                 }
             }
             else if (opCode == 0x59)
             {
                 addr = AbsoluteY(out bool crossPage);
-                m_Cycles += 4;
+                Cycles += 4;
                 if (crossPage)
                 {
-                    m_Cycles += 1;
+                    Cycles += 1;
                 }
             }
             else if (opCode == 0x41)
             {
                 addr = IndexedIndirect();
-                m_Cycles += 6;
+                Cycles += 6;
             }
             else if (opCode == 0x51)
             {
                 addr = IndirectIndexed(out bool crossPage);
-                m_Cycles += 5;
+                Cycles += 5;
                 if (crossPage)
                 {
-                    m_Cycles += 1;
+                    Cycles += 1;
                 }
             }
             else
@@ -1094,22 +1094,22 @@ namespace NesLib.CPU
             if (opCode == 0xE6)
             {
                 addr = ZeroPage();
-                m_Cycles += 5;
+                Cycles += 5;
             }
             else if (opCode == 0xF6)
             {
                 addr = ZeroPageX();
-                m_Cycles += 6;
+                Cycles += 6;
             }
             else if (opCode == 0xEE)
             {
                 addr = Absolute();
-                m_Cycles += 6;
+                Cycles += 6;
             }
             else if (opCode == 0xFE)
             {
                 addr = AbsoluteX(out _);
-                m_Cycles += 7;
+                Cycles += 7;
             }
             else
             {
@@ -1137,7 +1137,7 @@ namespace NesLib.CPU
 
                 P.ZeroFlag = BoolToBit(X == 0);
                 P.NegativeFlag = BitService.GetBit(X, 7);
-                m_Cycles += 2;
+                Cycles += 2;
             }
             else
             {
@@ -1158,7 +1158,7 @@ namespace NesLib.CPU
 
                 P.ZeroFlag = BoolToBit(Y == 0);
                 P.NegativeFlag = BitService.GetBit(Y, 7);
-                m_Cycles += 2;
+                Cycles += 2;
             }
             else
             {
@@ -1176,12 +1176,12 @@ namespace NesLib.CPU
             if (opCode == 0x4C)
             {
                 addr = Absolute();
-                m_Cycles += 3;
+                Cycles += 3;
             }
             else if (opCode == 0x6C)
             {
                 addr = Indirect();
-                m_Cycles += 5;
+                Cycles += 5;
             }
             else
             {
@@ -1205,7 +1205,7 @@ namespace NesLib.CPU
                 Push((byte)(returnAddr & 0xFF));
 
                 PC = addr;
-                m_Cycles += 6;
+                Cycles += 6;
             }
             else
             {
@@ -1225,56 +1225,56 @@ namespace NesLib.CPU
             if (opCode == 0xA9)
             {
                 addr = Immediate();
-                m_Cycles += 2;
+                Cycles += 2;
             }
             else if (opCode == 0xA5)
             {
                 addr = ZeroPage();
-                m_Cycles += 3;
+                Cycles += 3;
             }
             else if (opCode == 0xB5)
             {
                 addr = ZeroPageX();
-                m_Cycles += 4;
+                Cycles += 4;
             }
             else if (opCode == 0xAD)
             {
                 addr = Absolute();
-                m_Cycles += 4;
+                Cycles += 4;
             }
             else if (opCode == 0xBD)
             {
                 addr = AbsoluteX(out bool crossPage);
-                m_Cycles += 4;
+                Cycles += 4;
 
                 if (crossPage)
                 {
-                    m_Cycles += 1;
+                    Cycles += 1;
                 }
             }
             else if (opCode == 0xB9)
             {
                 addr = AbsoluteY(out bool crossPage);
-                m_Cycles += 4;
+                Cycles += 4;
 
                 if (crossPage)
                 {
-                    m_Cycles += 1;
+                    Cycles += 1;
                 }
             }
             else if (opCode == 0xA1)
             {
                 addr = IndexedIndirect();
-                m_Cycles += 6;
+                Cycles += 6;
             }
             else if (opCode == 0xB1)
             {
                 addr = IndirectIndexed(out bool crossPage);
-                m_Cycles += 5;
+                Cycles += 5;
 
                 if (crossPage)
                 {
-                    m_Cycles += 1;
+                    Cycles += 1;
                 }
             }
             else
@@ -1300,31 +1300,31 @@ namespace NesLib.CPU
             if (opCode == 0xA2)
             {
                 addr = Immediate();
-                m_Cycles += 2;
+                Cycles += 2;
             }
             else if (opCode == 0xA6)
             {
                 addr = ZeroPage();
-                m_Cycles += 3;
+                Cycles += 3;
             }
             else if (opCode == 0xB6)
             {
                 addr = ZeroPageY();
-                m_Cycles += 4;
+                Cycles += 4;
             }
             else if (opCode == 0xAE)
             {
                 addr = Absolute();
-                m_Cycles += 4;
+                Cycles += 4;
             }
             else if (opCode == 0xBE)
             {
                 addr = AbsoluteY(out bool crossPage);
-                m_Cycles += 4;
+                Cycles += 4;
 
                 if (crossPage)
                 {
-                    m_Cycles += 1;
+                    Cycles += 1;
                 }
             }
             else
@@ -1350,31 +1350,31 @@ namespace NesLib.CPU
             if (opCode == 0xA0)
             {
                 addr = Immediate();
-                m_Cycles += 2;
+                Cycles += 2;
             }
             else if (opCode == 0xA4)
             {
                 addr = ZeroPage();
-                m_Cycles += 3;
+                Cycles += 3;
             }
             else if (opCode == 0xB4)
             {
                 addr = ZeroPageX();
-                m_Cycles += 4;
+                Cycles += 4;
             }
             else if (opCode == 0xAC)
             {
                 addr = Absolute();
-                m_Cycles += 4;
+                Cycles += 4;
             }
             else if (opCode == 0xBC)
             {
                 addr = AbsoluteX(out bool crossPage);
-                m_Cycles += 4;
+                Cycles += 4;
 
                 if (crossPage)
                 {
-                    m_Cycles += 1;
+                    Cycles += 1;
                 }
             }
             else
@@ -1405,28 +1405,28 @@ namespace NesLib.CPU
                 P.ZeroFlag = BoolToBit(A == 0);
                 P.NegativeFlag = BitService.GetBit(A, 7);
 
-                m_Cycles += 2;
+                Cycles += 2;
                 return;
             }
             else if (opCode == 0x46)
             {
                 addr = ZeroPage();
-                m_Cycles += 5;
+                Cycles += 5;
             }
             else if (opCode == 0x56)
             {
                 addr = ZeroPageX();
-                m_Cycles += 6;
+                Cycles += 6;
             }
             else if (opCode == 0x4E)
             {
                 addr = Absolute();
-                m_Cycles += 6;
+                Cycles += 6;
             }
             else if (opCode == 0x5E)
             {
                 addr = AbsoluteX(out _);
-                m_Cycles += 7;
+                Cycles += 7;
             }
             else
             {
@@ -1451,7 +1451,7 @@ namespace NesLib.CPU
             if (opCode == 0xEA)
             {
                 //do nothing
-                m_Cycles += 2;
+                Cycles += 2;
             }
             else
             {
@@ -1470,56 +1470,56 @@ namespace NesLib.CPU
             if (opCode == 0x09)
             {
                 addr = Immediate();
-                m_Cycles += 2;
+                Cycles += 2;
             }
             else if (opCode == 0x05)
             {
                 addr = ZeroPage();
-                m_Cycles += 3;
+                Cycles += 3;
             }
             else if (opCode == 0x15)
             {
                 addr = ZeroPageX();
-                m_Cycles += 4;
+                Cycles += 4;
             }
             else if (opCode == 0x0D)
             {
                 addr = Absolute();
-                m_Cycles += 4;
+                Cycles += 4;
             }
             else if (opCode == 0x1D)
             {
                 addr = AbsoluteX(out bool crossPage);
-                m_Cycles += 4;
+                Cycles += 4;
 
                 if (crossPage)
                 {
-                    m_Cycles += 1;
+                    Cycles += 1;
                 }
             }
             else if (opCode == 0x19)
             {
                 addr = AbsoluteY(out bool crossPage);
-                m_Cycles += 4;
+                Cycles += 4;
 
                 if (crossPage)
                 {
-                    m_Cycles += 1;
+                    Cycles += 1;
                 }
             }
             else if (opCode == 0x01)
             {
                 addr = IndexedIndirect();
-                m_Cycles += 6;
+                Cycles += 6;
             }
             else if (opCode == 0x11)
             {
                 addr = IndirectIndexed(out bool crossPage);
-                m_Cycles += 5;
+                Cycles += 5;
 
                 if (crossPage)
                 {
-                    m_Cycles += 1;
+                    Cycles += 1;
                 }
             }
             else
@@ -1544,7 +1544,7 @@ namespace NesLib.CPU
             if (opCode == 0x48)
             {
                 Push(A);
-                m_Cycles += 3;
+                Cycles += 3;
             }
             else
             {
@@ -1566,7 +1566,7 @@ namespace NesLib.CPU
                 p = BitService.SetBit(p, 4);
                 p = BitService.SetBit(p, 5);
                 Push(p);
-                m_Cycles += 3;
+                Cycles += 3;
             }
             else
             {
@@ -1585,7 +1585,7 @@ namespace NesLib.CPU
                 A = Pop();
                 P.ZeroFlag = BoolToBit(A == 0);
                 P.NegativeFlag = BitService.GetBit(A, 7);
-                m_Cycles += 4;
+                Cycles += 4;
             }
             else
             {
@@ -1605,7 +1605,7 @@ namespace NesLib.CPU
                 p = BitService.SetBit(p, 5);
                 p = BitService.ClearBit(p, 4);
                 P.SetValue(p);
-                m_Cycles += 4;
+                Cycles += 4;
             }
             else
             {
@@ -1632,28 +1632,28 @@ namespace NesLib.CPU
                 P.CarryFlag = newCarryFlag;
                 P.ZeroFlag = BoolToBit(A == 0);
                 P.NegativeFlag = BitService.GetBit(A, 7);
-                m_Cycles += 2;
+                Cycles += 2;
                 return;
             }
             else if (opCode == 0x26)
             {
                 addr = ZeroPage();
-                m_Cycles += 5;
+                Cycles += 5;
             }
             else if (opCode == 0x36)
             {
                 addr = ZeroPageX();
-                m_Cycles += 6;
+                Cycles += 6;
             }
             else if (opCode == 0x2E)
             {
                 addr = Absolute();
-                m_Cycles += 6;
+                Cycles += 6;
             }
             else if (opCode == 0x3E)
             {
                 addr = AbsoluteX(out _);
-                m_Cycles += 7;
+                Cycles += 7;
             }
             else
             {
@@ -1696,28 +1696,28 @@ namespace NesLib.CPU
                 P.CarryFlag = newCarryFlag;
                 P.ZeroFlag = BoolToBit(A == 0);
                 P.NegativeFlag = BitService.GetBit(A, 7);
-                m_Cycles += 2;
+                Cycles += 2;
                 return;
             }
             else if (opCode == 0x66)
             {
                 addr = ZeroPage();
-                m_Cycles += 5;
+                Cycles += 5;
             }
             else if (opCode == 0x76)
             {
                 addr = ZeroPageX();
-                m_Cycles += 6;
+                Cycles += 6;
             }
             else if (opCode == 0x6E)
             {
                 addr = Absolute();
-                m_Cycles += 6;
+                Cycles += 6;
             }
             else if (opCode == 0x7E)
             {
                 addr = AbsoluteX(out _);
-                m_Cycles += 7;
+                Cycles += 7;
             }
             else
             {
@@ -1757,7 +1757,7 @@ namespace NesLib.CPU
                 byte high = Pop();
                 PC = (ushort)(high << 8 | low);
 
-                m_Cycles += 6;
+                Cycles += 6;
             }
             else
             {
@@ -1779,7 +1779,7 @@ namespace NesLib.CPU
                 PC = (ushort)(high << 8 | low);
                 ++PC;
 
-                m_Cycles += 6;
+                Cycles += 6;
             }
             else
             {
@@ -1799,53 +1799,53 @@ namespace NesLib.CPU
             if (opCode == 0xE9)
             {
                 addr = Immediate();
-                m_Cycles += 2;
+                Cycles += 2;
             }
             else if (opCode == 0xE5)
             {
                 addr = ZeroPage();
-                m_Cycles += 3;
+                Cycles += 3;
             }
             else if (opCode == 0xF5)
             {
                 addr = ZeroPageX();
-                m_Cycles += 4;
+                Cycles += 4;
             }
             else if (opCode == 0xED)
             {
                 addr = Absolute();
-                m_Cycles += 4;
+                Cycles += 4;
             }
             else if (opCode == 0xFD)
             {
                 addr = AbsoluteX(out bool crossPage);
-                m_Cycles += 4;
+                Cycles += 4;
                 if (crossPage)
                 {
-                    m_Cycles += 1;
+                    Cycles += 1;
                 }
             }
             else if (opCode == 0xF9)
             {
                 addr = AbsoluteY(out bool crossPage);
-                m_Cycles += 4;
+                Cycles += 4;
                 if (crossPage)
                 {
-                    m_Cycles += 1;
+                    Cycles += 1;
                 }
             }
             else if (opCode == 0xE1)
             {
                 addr = IndexedIndirect();
-                m_Cycles += 6;
+                Cycles += 6;
             }
             else if (opCode == 0xF1)
             {
                 addr = IndirectIndexed(out bool crossPage);
-                m_Cycles += 5;
+                Cycles += 5;
                 if (crossPage)
                 {
-                    m_Cycles += 1;
+                    Cycles += 1;
                 }
             }
             else
@@ -1873,7 +1873,7 @@ namespace NesLib.CPU
             if (opCode == 0x38)
             {
                 P.CarryFlag = 1;
-                m_Cycles += 2;
+                Cycles += 2;
             }
             else
             {
@@ -1890,7 +1890,7 @@ namespace NesLib.CPU
             if (opCode == 0xF8)
             {
                 P.DecimalMode = 1;
-                m_Cycles += 2;
+                Cycles += 2;
             }
             else
             {
@@ -1907,7 +1907,7 @@ namespace NesLib.CPU
             if (opCode == 0x78)
             {
                 P.InterruptDisable = 1;
-                m_Cycles += 2;
+                Cycles += 2;
             }
             else
             {
@@ -1926,37 +1926,37 @@ namespace NesLib.CPU
             if (opCode == 0x85)
             {
                 addr = ZeroPage();
-                m_Cycles += 3;
+                Cycles += 3;
             }
             else if (opCode == 0x95)
             {
                 addr = ZeroPageX();
-                m_Cycles += 4;
+                Cycles += 4;
             }
             else if (opCode == 0x8D)
             {
                 addr = Absolute();
-                m_Cycles += 4;
+                Cycles += 4;
             }
             else if (opCode == 0x9D)
             {
                 addr = AbsoluteX(out _);
-                m_Cycles += 5;
+                Cycles += 5;
             }
             else if (opCode == 0x99)
             {
                 addr = AbsoluteY(out _);
-                m_Cycles += 5;
+                Cycles += 5;
             }
             else if (opCode == 0x81)
             {
                 addr = IndexedIndirect();
-                m_Cycles += 6;
+                Cycles += 6;
             }
             else if (opCode == 0x91)
             {
                 addr = IndirectIndexed(out _);
-                m_Cycles += 6;
+                Cycles += 6;
             }
             else
             {
@@ -1977,17 +1977,17 @@ namespace NesLib.CPU
             if (opCode == 0x86)
             {
                 addr = ZeroPage();
-                m_Cycles += 3;
+                Cycles += 3;
             }
             else if (opCode == 0x96)
             {
                 addr = ZeroPageY();
-                m_Cycles += 4;
+                Cycles += 4;
             }
             else if (opCode == 0x8E)
             {
                 addr = Absolute();
-                m_Cycles += 4;
+                Cycles += 4;
             }
             else
             {
@@ -2008,17 +2008,17 @@ namespace NesLib.CPU
             if (opCode == 0x84)
             {
                 addr = ZeroPage();
-                m_Cycles += 3;
+                Cycles += 3;
             }
             else if (opCode == 0x94)
             {
                 addr = ZeroPageX();
-                m_Cycles += 4;
+                Cycles += 4;
             }
             else if (opCode == 0x8C)
             {
                 addr = Absolute();
-                m_Cycles += 4;
+                Cycles += 4;
             }
             else
             {
@@ -2041,7 +2041,7 @@ namespace NesLib.CPU
                 P.ZeroFlag = BoolToBit(X == 0);
                 P.NegativeFlag = BitService.GetBit(X, 7);
 
-                m_Cycles += 2;
+                Cycles += 2;
             }
             else
             {
@@ -2062,7 +2062,7 @@ namespace NesLib.CPU
                 P.ZeroFlag = BoolToBit(Y == 0);
                 P.NegativeFlag = BitService.GetBit(Y, 7);
 
-                m_Cycles += 2;
+                Cycles += 2;
             }
             else
             {
@@ -2084,7 +2084,7 @@ namespace NesLib.CPU
                 P.ZeroFlag = BoolToBit(X == 0);
                 P.NegativeFlag = BitService.GetBit(X, 7);
 
-                m_Cycles += 2;
+                Cycles += 2;
             }
             else
             {
@@ -2105,7 +2105,7 @@ namespace NesLib.CPU
                 P.ZeroFlag = BoolToBit(A == 0);
                 P.NegativeFlag = BitService.GetBit(A, 7);
 
-                m_Cycles += 2;
+                Cycles += 2;
             }
             else
             {
@@ -2124,7 +2124,7 @@ namespace NesLib.CPU
             {
                 SP = X;
 
-                m_Cycles += 2;
+                Cycles += 2;
             }
             else
             {
@@ -2145,7 +2145,7 @@ namespace NesLib.CPU
                 P.ZeroFlag = BoolToBit(A == 0);
                 P.NegativeFlag = BitService.GetBit(A, 7);
 
-                m_Cycles += 2;
+                Cycles += 2;
             }
             else
             {
@@ -2163,45 +2163,45 @@ namespace NesLib.CPU
             if (opCode == 0x80)
             {
                 _ = Immediate();
-                m_Cycles += 2;
+                Cycles += 2;
             }
             else if (opCode == 0x04 || opCode == 0x44 || opCode == 0x64)
             {
                 _ = ZeroPage();
-                m_Cycles += 3;
+                Cycles += 3;
             }
             else if (opCode == 0x0C)
             {
                 _ = Absolute();
-                m_Cycles += 4;
+                Cycles += 4;
             }
             else if (opCode == 0x14 || opCode == 0x34 || opCode == 0x54 || opCode == 0x74 || opCode == 0xD4 || opCode == 0xF4)
             {
                 _ = ZeroPageX();
-                m_Cycles += 4;
+                Cycles += 4;
             }
             else if (opCode == 0x1C || opCode == 0x3C || opCode == 0x5C || opCode == 0x7C || opCode == 0xDC || opCode == 0xFC)
             {
                 _ = AbsoluteX(out bool crossPage);
-                m_Cycles += 4;
+                Cycles += 4;
                 if (crossPage)
                 {
-                    m_Cycles += 1;
+                    Cycles += 1;
                 }
             }
             else if (opCode == 0x89)
             {
                 _ = Immediate();
-                m_Cycles += 2;
+                Cycles += 2;
             }
             else if (opCode == 0x82 || opCode == 0xC2 || opCode == 0xE2)
             {
                 _ = Immediate();
-                m_Cycles += 2;
+                Cycles += 2;
             }
             else if (opCode == 0x1A || opCode == 0x3A || opCode == 0x5A || opCode == 0x7A || opCode == 0xDA || opCode == 0xFA)
             {
-                m_Cycles += 2;
+                Cycles += 2;
             }
             else
             {
@@ -2215,7 +2215,7 @@ namespace NesLib.CPU
         /// <param name="opCode"></param>
         private void UNOFFICAL_LAX(byte opCode)
         {
-            long tmpCycle = m_Cycles; //因为这里的cycle不是简单的指令里面的相加，所以这里重新计算
+            long tmpCycle = Cycles; //因为这里的cycle不是简单的指令里面的相加，所以这里重新计算
 
             if (opCode == 0xA3)
             {
@@ -2265,7 +2265,7 @@ namespace NesLib.CPU
 
             TAX(0xAA);
 
-            m_Cycles = tmpCycle;
+            Cycles = tmpCycle;
         }
 
         /// <summary>
@@ -2278,22 +2278,22 @@ namespace NesLib.CPU
             if (opCode == 0x83)
             {
                 addr = IndexedIndirect();
-                m_Cycles += 6;
+                Cycles += 6;
             }
             else if (opCode == 0x87)
             {
                 addr = ZeroPage();
-                m_Cycles += 3;
+                Cycles += 3;
             }
             else if (opCode == 0x8F)
             {
                 addr = Absolute();
-                m_Cycles += 4;
+                Cycles += 4;
             }
             else if (opCode == 0x97)
             {
                 addr = ZeroPageY();
-                m_Cycles += 4;
+                Cycles += 4;
             }
             else
             {
@@ -2327,7 +2327,7 @@ namespace NesLib.CPU
         private void UNOFFICAL_DCP(byte opCode)
         {
             ushort addr;
-            long tmpCycle = m_Cycles;
+            long tmpCycle = Cycles;
             if (opCode == 0xC3)
             {
                 addr = IndexedIndirect();
@@ -2380,7 +2380,7 @@ namespace NesLib.CPU
             P.ZeroFlag = BoolToBit(A == data);
             P.NegativeFlag = BitService.GetBit(diff, 7);
 
-            m_Cycles = tmpCycle;
+            Cycles = tmpCycle;
         }
 
         /// <summary>
@@ -2390,7 +2390,7 @@ namespace NesLib.CPU
         private void UNOFFICAL_ISCorISB(byte opCode)
         {
             ushort addr;
-            long tmpCycle = m_Cycles;
+            long tmpCycle = Cycles;
             if (opCode == 0xE3)
             {
                 addr = IndexedIndirect();
@@ -2446,7 +2446,7 @@ namespace NesLib.CPU
             P.OverflowFlag = BoolToBit(CheckSubOverflowPresent(oldA, data, (byte)(1 - P.CarryFlag)));
             P.CarryFlag = BoolToBit(carryValue >= 0);
 
-            m_Cycles = tmpCycle;
+            Cycles = tmpCycle;
         }
 
         /// <summary>
@@ -2456,7 +2456,7 @@ namespace NesLib.CPU
         private void UNOFFICAL_SLO(byte opCode)
         {
             ushort addr;
-            long tmpCycle = m_Cycles;
+            long tmpCycle = Cycles;
             if (opCode == 0x03)
             {
                 addr = IndexedIndirect();
@@ -2513,7 +2513,7 @@ namespace NesLib.CPU
             P.ZeroFlag = BoolToBit(A == 0);
             P.NegativeFlag = BitService.GetBit(A, 7);
 
-            m_Cycles = tmpCycle;
+            Cycles = tmpCycle;
         }
 
         /// <summary>
@@ -2523,7 +2523,7 @@ namespace NesLib.CPU
         private void UNOFFICAL_RLA(byte opCode)
         {
             ushort addr;
-            long tmpCycle = m_Cycles;
+            long tmpCycle = Cycles;
             if (opCode == 0x23)
             {
                 addr = IndexedIndirect();
@@ -2583,7 +2583,7 @@ namespace NesLib.CPU
             P.ZeroFlag = BoolToBit(A == 0);
             P.NegativeFlag = BitService.GetBit(A, 7);
 
-            m_Cycles = tmpCycle;
+            Cycles = tmpCycle;
         }
 
         /// <summary>
@@ -2593,7 +2593,7 @@ namespace NesLib.CPU
         private void UNOFFICAL_SRE(byte opCode)
         {
             ushort addr;
-            long tmpCycle = m_Cycles;
+            long tmpCycle = Cycles;
             if (opCode == 0x43)
             {
                 addr = IndexedIndirect();
@@ -2648,7 +2648,7 @@ namespace NesLib.CPU
             P.ZeroFlag = BoolToBit(A == 0);
             P.NegativeFlag = BitService.GetBit(A, 7);
 
-            m_Cycles = tmpCycle;
+            Cycles = tmpCycle;
         }
 
         /// <summary>
@@ -2658,7 +2658,7 @@ namespace NesLib.CPU
         private void UNOFFICAL_RRA(byte opCode)
         {
             ushort addr;
-            long tmpCycle = m_Cycles;
+            long tmpCycle = Cycles;
             if (opCode == 0x63)
             {
                 addr = IndexedIndirect();
@@ -2725,7 +2725,7 @@ namespace NesLib.CPU
             P.OverflowFlag = BoolToBit(CheckAddOverflowPresent(oldA, data, P.CarryFlag));
             P.CarryFlag = BoolToBit((carryValue >> 8) != 0);
 
-            m_Cycles = tmpCycle;
+            Cycles = tmpCycle;
         }
 
         /// <summary>
