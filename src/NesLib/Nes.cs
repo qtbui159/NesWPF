@@ -111,6 +111,11 @@ namespace NesLib
             return m_PPU2C02.PaintFrame();
         }
 
+        public void Right(bool pressDown)
+        {
+            m_Joytick1.Right(pressDown);
+        }
+
         public void Down(bool pressDown)
         {
             m_Joytick1.Down(pressDown);

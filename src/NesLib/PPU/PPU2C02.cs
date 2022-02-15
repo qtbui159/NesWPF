@@ -350,7 +350,7 @@ namespace NesLib.PPU
 
         public int[][] PaintFrame()
         {
-            int bbb = Palette.UniversalBackgroundColor;
+            int bbb = Palette.GetRGBAColor(m_PPUBus.ReadByte(0x3F00));
 
             int[][] frame = new int[240][];
             for (int i = 0; i < 240; ++i)
@@ -380,7 +380,7 @@ namespace NesLib.PPU
                 {
                     continue;
                 }
-                if (y >= 0xEF || x >= 0xF9)
+                if (y >= 240-7 || x >= 256-7)
                 {
                     continue;
                 }

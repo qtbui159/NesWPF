@@ -21,8 +21,6 @@ namespace NesLib.PPU
         private static readonly Dictionary<int, int> m_OffsetMapRGBA;
         private readonly byte[] m_Data;
 
-        public static int UniversalBackgroundColor => m_OffsetMapRGBA[0];
-
         static Palette()
         {
             m_OffsetMapRGBA = new Dictionary<int, int>();

@@ -19,6 +19,8 @@ namespace NesLib
         /// <param name="nesFile">卡文件</param>
         Task InsertCartidgeAsync(string nesFile);
 
+        void Right(bool pressDown);
+
         void Down(bool pressDown);
 
         void Start(bool pressDown);
