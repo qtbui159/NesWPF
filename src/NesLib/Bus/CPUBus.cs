@@ -14,6 +14,7 @@ using Utils;
  * 1*)https://wiki.nesdev.org/w/index.php?title=PPU_registers#PPUSCROLL
  * 2*)https://wiki.nesdev.org/w/index.php?title=PPU_registers#Address_.28.242006.29_.3E.3E_write_x2
  * 3*)https://wiki.nesdev.org/w/index.php/PPU_registers#The_PPUDATA_read_buffer_.28post-fetch.29
+ * 4*)https://wiki.nesdev.org/w/index.php?title=PPU_scrolling
  */
 namespace NesLib.Bus
 {
@@ -70,6 +71,9 @@ namespace NesLib.Bus
                         // 读取后会清除VBlank状态
                         byte data = m_PPU.STATUS.Value;
                         m_PPU.STATUS.V = 0;
+
+                        //参考资料4*)
+                        m_PPU.WriteX2Flag = false;
                         return data;
                     }
                     else if (ioRealAddr == 0x2003)
@@ -153,6 +157,11 @@ namespace NesLib.Bus
                     if (ioRealAddr == 0x2000)
                     {
                         m_PPU.CTRL.SetValue(data);
+
+                        //参考资料4*)
+                        byte gh = (byte)(data & 0x3);
+                        m_PPU.T &= 0xF3FF;
+                        m_PPU.T |= (ushort)(gh << 10);
                     }
                     else if (ioRealAddr == 0x2001)
                     {
@@ -172,21 +181,30 @@ namespace NesLib.Bus
                     }
                     else if (ioRealAddr == 0x2005)
                     {
-                        //双写操作，参考资料1*)
+                        //双写操作，参考资料1*),4*)
                         if (m_PPU.WriteX2Flag)
                         {
                             //二写
+                            byte fgh = (byte)(data & 0x7);
+                            byte abcde = (byte)(data >> 3);
+                            m_PPU.T &= 0x8C1F;
+                            m_PPU.T |= (ushort)(fgh << 12);
+                            m_PPU.T |= (ushort)(abcde << 5);
                         }
                         else
                         {
                             //一写
+                            byte abcde = (byte)(data >> 3);
+                            m_PPU.T &= 0xFFE0;
+                            m_PPU.T |= abcde;
+                            m_PPU.X = (byte)(data & 0x7);
                         }
 
                         m_PPU.WriteX2Flag = !m_PPU.WriteX2Flag;
                     }
                     else if (ioRealAddr == 0x2006)
                     {
-                        //双写操作，参考资料2*)
+                        //双写操作，参考资料2*),4*)
                         if (m_PPU.WriteX2Flag)
                         {
                             //二写，再写低位
@@ -194,6 +212,9 @@ namespace NesLib.Bus
                             tmpAddr = (ushort)(tmpAddr & 0xFF00);
                             tmpAddr = (ushort)(tmpAddr | data);
                             m_PPU.Addr = tmpAddr;
+
+                            m_PPU.T &= 0xFF00;
+                            m_PPU.T |= data;
                         }
                         else
                         {
@@ -202,6 +223,11 @@ namespace NesLib.Bus
                             tmpAddr = (ushort)(tmpAddr & 0x00FF);
                             tmpAddr = (ushort)((data << 8) | tmpAddr);
                             m_PPU.Addr = tmpAddr;
+
+                            byte cdefgh = (byte)(data & 0x3F);
+                            m_PPU.T &= 0xC0FF;
+                            m_PPU.T |= (ushort)(cdefgh << 8);
+                            m_PPU.T &= 0xBFFF;
                         }
 
                         m_PPU.WriteX2Flag = !m_PPU.WriteX2Flag;

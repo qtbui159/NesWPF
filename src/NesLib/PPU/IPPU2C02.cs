@@ -19,6 +19,22 @@ namespace NesLib.PPU
         STATUSRegister STATUS { get; }
 
         /// <summary>
+        /// 寄存器，实际和Addr相同，为了和文档中的寄存器对应起来
+        /// Current VRAM address (15 bits)
+        /// </summary>
+        ushort V { get; set; }
+
+        /// <summary>
+        /// Temporary VRAM address (15 bits); can also be thought of as the address of the top left onscreen tile.
+        /// </summary>
+        ushort T { get; set; }
+
+        /// <summary>
+        /// Fine X scroll (3 bits)
+        /// </summary>
+        byte X { get; set; }
+
+        /// <summary>
         /// 显存地址
         /// </summary>
         ushort Addr { get; set; }
@@ -41,6 +57,7 @@ namespace NesLib.PPU
 
         /// <summary>
         /// 双写操作，初始化为false
+        /// First or second write toggle (1 bit)
         /// </summary>
         bool WriteX2Flag { get; set; }
 

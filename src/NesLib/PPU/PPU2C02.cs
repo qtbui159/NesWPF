@@ -29,6 +29,10 @@ namespace NesLib.PPU
         public MASKRegister MASK { get; private set; }
         public STATUSRegister STATUS { get; private set; }
 
+        public ushort V { get => Addr; set => Addr = value; }
+        public ushort T { get; set; }
+        public byte X { get; set; }
+
         public ushort Addr { get; set; }
 
         /// <summary>
