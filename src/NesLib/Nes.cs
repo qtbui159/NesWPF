@@ -71,7 +71,7 @@ namespace NesLib
 
                 //1.0-230行，共240行visible 扫描线
                 m_CPU6502.TickTock(240);
-                m_PPU2C02.PaintFrame();
+                m_PPU2C02.ScrollingVisibleScanLine();
 
                 //2.240-260行，空行,241行,第1个点（0开始算) set vblank flag
                 //这里不需要太精确，直接先vblank然后跑21行空行
@@ -88,7 +88,9 @@ namespace NesLib
                 //3.261行，预扫描行，第1个点（0开始算）clear vblank flag; sprite 0 hits;sprite overflow;
                 m_PPU2C02.STATUS.S = 0;
                 m_CPU6502.TickTock(1);
+                m_PPU2C02.ScrollingPreRenderLine();
 
+                m_PPU2C02.PaintFrame();
                 m_CPU6502.ResetCycles();
             }
         }

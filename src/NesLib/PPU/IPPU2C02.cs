@@ -94,5 +94,15 @@ namespace NesLib.PPU
         /// </summary>
         /// <returns></returns>
         int[][] PaintFrame();
+
+        /// <summary>
+        /// PPU可视扫描线处理
+        /// </summary>
+        void ScrollingVisibleScanLine();
+
+        /// <summary>
+        /// PPU预扫描线处理
+        /// </summary>
+        void ScrollingPreRenderLine();
     }
 }

@@ -16,11 +16,15 @@ using Utils;
 //6*)https://wiki.nesdev.org/w/index.php/PPU_registers#The_PPUDATA_read_buffer_.28post-fetch.29
 //7*)https://wiki.nesdev.org/w/index.php?title=Sprite_overflow_games
 //8*)https://wiki.nesdev.org/w/index.php?title=PPU_sprite_evaluation
+//9*)https://wiki.nesdev.org/w/index.php?title=PPU_scrolling#At_dot_256_of_each_scanline
+//10*)https://wiki.nesdev.org/w/images/4/4f/Ppu.svg
 
 namespace NesLib.PPU
 {
     class PPU2C02 : IPPU2C02
     {
+        private const int SCAN_LINE_COLUMN = 341;
+
         private readonly IPPUBus m_PPUBus;
 
         private MirroringMode m_MirroringMode;
@@ -277,7 +281,7 @@ namespace NesLib.PPU
                 }
 
                 if (count == 0)
-                { 
+                {
                     STATUS.S = 1;
                 }
 
@@ -384,7 +388,7 @@ namespace NesLib.PPU
                 {
                     continue;
                 }
-                if (y >= 240-7 || x >= 256-7)
+                if (y >= 240 - 7 || x >= 256 - 7)
                 {
                     continue;
                 }
@@ -406,6 +410,122 @@ namespace NesLib.PPU
             }
 
             return frame;
+        }
+
+        public void ScrollingVisibleScanLine()
+        {
+            //参考资料10*)
+            const int VISIBLE_SCAN_LINE_ROW = 240;
+
+            for (int y = 0; y < VISIBLE_SCAN_LINE_ROW; ++y)
+            {
+                for (int x = 0; x < SCAN_LINE_COLUMN; ++x)
+                {
+                    if (x < 256)
+                    {
+                        IncreaseX();
+                    }
+                    else if (x == 256)
+                    {
+                        IncreaseY();
+                    }
+                    else if (x == 257)
+                    {
+                        //参考资料9*)
+                        ushort abcdef = (ushort)(T & 0x41F);
+                        V &= 0xFBE0;
+                        V |= abcdef;
+                    }
+                    else if (x == 328 || x == 336)
+                    {
+                        IncreaseX();
+                    }
+                }
+            }
+        }
+
+        public void ScrollingPreRenderLine()
+        {
+            //参考资料10*)
+            for (int x = 0; x < SCAN_LINE_COLUMN; ++x)
+            {
+                if (x < 256)
+                {
+                    IncreaseX();
+                }
+                else if (x == 256)
+                {
+                    IncreaseY();
+                }
+                else if (x == 257)
+                {
+                    //参考资料9*)
+                    ushort abcdef = (ushort)(T & 0x41F);
+                    V &= 0xFBE0;
+                    V |= abcdef;
+                }
+                else if (x >= 280 && x <= 304)
+                {
+                    //参考资料9*)
+                    //During dots 280 to 304 of the pre-render scanline (end of vblank)
+
+                    ushort ghiabcdef = (ushort)(T & 0xFBE0);
+                    V &= 0x841F;
+                    V |= ghiabcdef;
+                }
+                else if (x == 328 || x == 336)
+                {
+                    IncreaseX();
+                }
+            }
+        }
+
+        private void IncreaseX()
+        {
+            //参考资料9*)
+            unchecked 
+            {
+                if ((V & 0x001F) == 31)
+                {
+                    V &= (ushort)~0x001F;
+                    V ^= 0x0400;
+                }
+                else
+                {
+                    V += 1;
+                }
+            }
+        }
+
+        private void IncreaseY()
+        {
+            //参考资料9*)
+            unchecked
+            {
+                if ((V & 0x7000) != 0x7000)
+                {
+                    V += 0x1000;
+                }
+                else
+                {
+                    V &= (ushort)~0x7000;
+                    ushort y = (ushort)((V & 0x03E0) >> 5);
+                    if (y == 29)
+                    {
+                        y = 0;
+                        V ^= 0x0800;
+                    }
+                    else if (y == 31)
+                    {
+                        y = 0;
+                    }
+                    else
+                    {
+                        y += 1;
+                    }
+                    V = (ushort)((V & (ushort)~0x03E0) | (ushort)(y << 5));
+                }
+            }
         }
 
         private byte[] ReadBlock(ushort addr, int length)
