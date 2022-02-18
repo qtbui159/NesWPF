@@ -8,12 +8,23 @@ namespace NesLib.CPU
 {
     interface ICPU6502
     {
-        long Cycles { get; set; }
+        long Cycles { get; }
 
         /// <summary>
         /// 执行一条指令
         /// </summary>
         void TickTock();
+
+        /// <summary>
+        /// 执行n条扫描线的指令周期，1条扫描线为113.6667指令周期
+        /// </summary>
+        /// <param name="scanlineCount"></param>
+        void TickTock(int scanlineCount);
+
+        /// <summary>
+        /// 重置cpu指令周期
+        /// </summary>
+        void ResetCycles();
 
         /// <summary>
         /// Reset中断

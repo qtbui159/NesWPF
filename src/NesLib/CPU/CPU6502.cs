@@ -202,6 +202,22 @@ namespace NesLib.CPU
             impl.Invoke(opCode);
         }
 
+        public void TickTock(int scanlineCount)
+        {
+            //一条扫描线的cpu指令周期为113.666667
+            int needRunCycles = (int)Math.Ceiling(113.0 * 2 / 3 * scanlineCount);
+            long endCycles = Cycles + needRunCycles;
+            while (Cycles <= endCycles)
+            {
+                TickTock();
+            }
+        }
+
+        public void ResetCycles()
+        {
+            Cycles = 0;
+        }
+
         /// <summary>
         /// A,Z,C,N = A+M+C
         /// This instruction adds the contents of a memory location to the accumulator together with the carry bit.

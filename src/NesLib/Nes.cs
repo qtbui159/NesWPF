@@ -1,7 +1,6 @@
 ﻿using NesLib.Bus;
 using NesLib.Cartridge;
 using NesLib.CPU;
-using NesLib.IO;
 using NesLib.JoyStick;
 using NesLib.Memory;
 using NesLib.NesFile;
@@ -12,6 +11,11 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+/**
+ *参考资料
+ *1*)https://wiki.nesdev.org/w/index.php?title=NMI
+ *2*)https://wiki.nesdev.org/w/index.php?title=File:Ntsc_timing.png
+ */
 
 namespace NesLib
 {
@@ -63,20 +67,29 @@ namespace NesLib
 
             while (true)
             {
-                m_CPU6502.TickTock();
+                //时序参考资料2*)
 
-                if (m_CPU6502.Cycles >= 29780)
+                //1.0-230行，共240行visible 扫描线
+                m_CPU6502.TickTock(240);
+                m_PPU2C02.PaintFrame();
+
+                //2.240-260行，空行,241行,第1个点（0开始算) set vblank flag
+                //这里不需要太精确，直接先vblank然后跑21行空行
+
+                //VBLANK，参考资料1*)
+                m_PPU2C02.STATUS.V = 1;
+
+                if (m_PPU2C02.CTRL.V == 1)
                 {
-                    //VBLANK
-                    m_PPU2C02.STATUS.V = 1;
-                    
-                    if (m_PPU2C02.CTRL.V == 1)
-                    {
-                        m_CPU6502.NMI();
-                    }
-                    m_CPU6502.Cycles = 0;
-                    m_PPU2C02.STATUS.S = 0;
+                    m_CPU6502.NMI();
                 }
+                m_CPU6502.TickTock(21);
+
+                //3.261行，预扫描行，第1个点（0开始算）clear vblank flag; sprite 0 hits;sprite overflow;
+                m_PPU2C02.STATUS.S = 0;
+                m_CPU6502.TickTock(1);
+
+                m_CPU6502.ResetCycles();
             }
         }
 
