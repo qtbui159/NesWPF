@@ -25,6 +25,7 @@ namespace NesLib.Bus
         private IPPU2C02 m_PPU;
         private IJoyStick m_P1JoyStick;
         private IJoyStick m_P2JoyStick;
+        private Action m_DMACycle;
 
         public void ConnectRAM(IRAM ram)
         {
@@ -96,16 +97,18 @@ namespace NesLib.Bus
                     {
                         //参考资料4*),这里读取的永远都是缓存值
                         byte oldData = m_PPU.ReadBuffer;
-                        byte data = m_PPU.ReadByte(m_PPU.Addr);
+                        ushort vramAddr = m_PPU.Addr.Value;
+                        byte data = m_PPU.ReadByte(vramAddr);
                         m_PPU.ReadBuffer = data;
                         if (m_PPU.CTRL.I == 1)
                         {
-                            m_PPU.Addr += 32;
+                            vramAddr += 32;
                         }
                         else
                         {
-                            m_PPU.Addr += 1;
+                            vramAddr += 1;
                         }
+                        m_PPU.Addr.SetValue(vramAddr);
                         return oldData;
                     }
                     else
@@ -158,10 +161,8 @@ namespace NesLib.Bus
                     {
                         m_PPU.CTRL.SetValue(data);
 
-                        //参考资料4*)
-                        byte gh = (byte)(data & 0x3);
-                        m_PPU.T &= 0xF3FF;
-                        m_PPU.T |= (ushort)(gh << 10);
+                        m_PPU.T.UpdateBit(BitService.GetBit(data, 0), 10);
+                        m_PPU.T.UpdateBit(BitService.GetBit(data, 1), 11);
                     }
                     else if (ioRealAddr == 0x2001)
                     {
@@ -181,22 +182,28 @@ namespace NesLib.Bus
                     }
                     else if (ioRealAddr == 0x2005)
                     {
-                        //双写操作，参考资料1*),4*)
+                        //双写操作，参考资料1*)
                         if (m_PPU.WriteX2Flag)
                         {
                             //二写
-                            byte fgh = (byte)(data & 0x7);
-                            byte abcde = (byte)(data >> 3);
-                            m_PPU.T &= 0x8C1F;
-                            m_PPU.T |= (ushort)(fgh << 12);
-                            m_PPU.T |= (ushort)(abcde << 5);
+                            m_PPU.T.UpdateBit(BitService.GetBit(data, 0), 12);
+                            m_PPU.T.UpdateBit(BitService.GetBit(data, 1), 13);
+                            m_PPU.T.UpdateBit(BitService.GetBit(data, 2), 14);
+                            m_PPU.T.UpdateBit(BitService.GetBit(data, 3), 5);
+                            m_PPU.T.UpdateBit(BitService.GetBit(data, 4), 6);
+                            m_PPU.T.UpdateBit(BitService.GetBit(data, 5), 7);
+                            m_PPU.T.UpdateBit(BitService.GetBit(data, 6), 8);
+                            m_PPU.T.UpdateBit(BitService.GetBit(data, 7), 9);
                         }
                         else
                         {
                             //一写
-                            byte abcde = (byte)(data >> 3);
-                            m_PPU.T &= 0xFFE0;
-                            m_PPU.T |= abcde;
+                            m_PPU.T.UpdateBit(BitService.GetBit(data, 3), 0);
+                            m_PPU.T.UpdateBit(BitService.GetBit(data, 4), 1);
+                            m_PPU.T.UpdateBit(BitService.GetBit(data, 5), 2);
+                            m_PPU.T.UpdateBit(BitService.GetBit(data, 6), 3);
+                            m_PPU.T.UpdateBit(BitService.GetBit(data, 7), 4);
+
                             m_PPU.X = (byte)(data & 0x7);
                         }
 
@@ -204,46 +211,49 @@ namespace NesLib.Bus
                     }
                     else if (ioRealAddr == 0x2006)
                     {
-                        //双写操作，参考资料2*),4*)
+                        //双写操作，参考资料2*)
                         if (m_PPU.WriteX2Flag)
                         {
                             //二写，再写低位
-                            ushort tmpAddr = m_PPU.Addr;
-                            tmpAddr = (ushort)(tmpAddr & 0xFF00);
-                            tmpAddr = (ushort)(tmpAddr | data);
-                            m_PPU.Addr = tmpAddr;
+                            m_PPU.T.UpdateBit(BitService.GetBit(data, 0), 0);
+                            m_PPU.T.UpdateBit(BitService.GetBit(data, 1), 1);
+                            m_PPU.T.UpdateBit(BitService.GetBit(data, 2), 2);
+                            m_PPU.T.UpdateBit(BitService.GetBit(data, 3), 3);
+                            m_PPU.T.UpdateBit(BitService.GetBit(data, 4), 4);
+                            m_PPU.T.UpdateBit(BitService.GetBit(data, 5), 5);
+                            m_PPU.T.UpdateBit(BitService.GetBit(data, 6), 6);
+                            m_PPU.T.UpdateBit(BitService.GetBit(data, 7), 7);
 
-                            m_PPU.T &= 0xFF00;
-                            m_PPU.T |= data;
+                            m_PPU.Addr.SetValue(m_PPU.T.Value);
                         }
                         else
                         {
                             //一写，先写高位
-                            ushort tmpAddr = m_PPU.Addr;
-                            tmpAddr = (ushort)(tmpAddr & 0x00FF);
-                            tmpAddr = (ushort)((data << 8) | tmpAddr);
-                            m_PPU.Addr = tmpAddr;
-
-                            byte cdefgh = (byte)(data & 0x3F);
-                            m_PPU.T &= 0xC0FF;
-                            m_PPU.T |= (ushort)(cdefgh << 8);
-                            m_PPU.T &= 0xBFFF;
+                            m_PPU.T.UpdateBit(BitService.GetBit(data, 0), 8);
+                            m_PPU.T.UpdateBit(BitService.GetBit(data, 1), 9);
+                            m_PPU.T.UpdateBit(BitService.GetBit(data, 2), 10);
+                            m_PPU.T.UpdateBit(BitService.GetBit(data, 3), 11);
+                            m_PPU.T.UpdateBit(BitService.GetBit(data, 4), 12);
+                            m_PPU.T.UpdateBit(BitService.GetBit(data, 5), 13);
+                            m_PPU.T.UpdateBit(0, 14);
                         }
 
                         m_PPU.WriteX2Flag = !m_PPU.WriteX2Flag;
                     }
                     else if (ioRealAddr == 0x2007)
                     {
-                        m_PPU.WriteByte(m_PPU.Addr, data);
+                        ushort vramAddr = m_PPU.Addr.Value;
+                        m_PPU.WriteByte(vramAddr, data);
 
                         if (m_PPU.CTRL.I == 1)
                         {
-                            m_PPU.Addr += 32;
+                            vramAddr += 32;
                         }
                         else
                         {
-                            m_PPU.Addr += 1;
+                            vramAddr += 1;
                         }
+                        m_PPU.Addr.SetValue(vramAddr);
                     }
                 }
                 else if(addr == 0x4014)
@@ -259,6 +269,8 @@ namespace NesLib.Bus
                     byte[] tmpData = dataList.ToArray();
 
                     Array.Copy(tmpData, m_PPU.OAM, tmpData.Length);
+
+                    m_DMACycle?.Invoke();
                 }
                 else if (addr == 0x4016)
                 {
@@ -284,6 +296,11 @@ namespace NesLib.Bus
         private ushort GetIORegisterRealAddr(ushort addr)
         {
             return (ushort)(addr & 0x2007);
+        }
+
+        public void SetDMACycles(Action dmaCycle)
+        {
+            m_DMACycle = dmaCycle;
         }
     }
 }

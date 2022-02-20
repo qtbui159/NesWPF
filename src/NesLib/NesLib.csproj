@@ -74,6 +74,7 @@
     <Compile Include="PPU\Palette.cs" />
     <Compile Include="PPU\PPU2C02.cs" />
     <Compile Include="PPU\STATUSRegister.cs" />
+    <Compile Include="PPU\VRAMAddrRegister.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

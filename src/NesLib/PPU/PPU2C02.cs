@@ -32,12 +32,9 @@ namespace NesLib.PPU
         public CTRLRegister CTRL { get; private set; }
         public MASKRegister MASK { get; private set; }
         public STATUSRegister STATUS { get; private set; }
-
-        public ushort V { get => Addr; set => Addr = value; }
-        public ushort T { get; set; }
+        public VRAMAddrRegister T { get; set; }
+        public VRAMAddrRegister Addr { get; set; }
         public byte X { get; set; }
-
-        public ushort Addr { get; set; }
 
         /// <summary>
         /// 这里只实现了一级OAM，实际PPU中还有一个二级OAM，和sprite overflow bug息息相关
@@ -60,6 +57,8 @@ namespace NesLib.PPU
             m_OAM = new byte[256];
             OAMAddr = 0;
             WriteX2Flag = false;
+            Addr = new VRAMAddrRegister();
+            T = new VRAMAddrRegister();
         }
 
         public void WriteByte(ushort addr, byte data)
@@ -175,6 +174,7 @@ namespace NesLib.PPU
             int vramOffset = ty * 32 + tx;
             //开发模式下默认取第一屏的，所以起始地址为0x2000
             vramOffset += 0x2000;
+            vramOffset = GetVRAMRealAddr((ushort)vramOffset);
 
             //3.根据vram中的偏移地址，得到pattern table中的数据地址
             //因为pattern talbe中每16字节为单位，所以需要乘起来
@@ -201,7 +201,7 @@ namespace NesLib.PPU
             int attributeIndex = GetAttributeIndex(tx, ty);
 
             //6.根据资料4*),得到attribute的地址和值
-            int attributeOffset = 0x2000 + 960 + attributeIndex;
+            int attributeOffset = GetVRAMBaseRealAddr((ushort)vramOffset) + 960 + attributeIndex;
             byte attributeData = m_PPUBus.ReadByte((ushort)attributeOffset);
 
             //7.根据方位取得attributeData上的某2位，和pattern name取出来的数据进行组合，得到一个tile的全部颜色
@@ -336,7 +336,7 @@ namespace NesLib.PPU
 
                 if (count == 0)
                 {
-                    STATUS.S = 1;
+                    //STATUS.S = 1;
                 }
 
                 if (horizentalFlip == 1)
@@ -354,6 +354,173 @@ namespace NesLib.PPU
             y = 0;
             visible = false;
             return null;
+        }
+
+        public void PreRenderLine()
+        {
+            if (MASK.b == 0 || MASK.s == 0)
+            {
+                return;
+            }
+
+            for (int x = 0; x < 256; ++x)
+            {
+                if (x % 8 == 0 && x != 0)
+                {
+                    IncX();
+                }
+            }
+            //256dot
+            IncX();
+            IncY();
+
+            //257dot
+            Addr.UpdateBit(BitService.GetBit(T.Value, 0), 0);
+            Addr.UpdateBit(BitService.GetBit(T.Value, 1), 1);
+            Addr.UpdateBit(BitService.GetBit(T.Value, 2), 2);
+            Addr.UpdateBit(BitService.GetBit(T.Value, 3), 3);
+            Addr.UpdateBit(BitService.GetBit(T.Value, 4), 4);
+            Addr.UpdateBit(BitService.GetBit(T.Value, 10), 10);
+
+            //280-304dot
+
+            Addr.UpdateBit(BitService.GetBit(T.Value, 5), 5);
+            Addr.UpdateBit(BitService.GetBit(T.Value, 6), 6);
+            Addr.UpdateBit(BitService.GetBit(T.Value, 7), 7);
+            Addr.UpdateBit(BitService.GetBit(T.Value, 8), 8);
+            Addr.UpdateBit(BitService.GetBit(T.Value, 9), 9);
+
+            Addr.UpdateBit(BitService.GetBit(T.Value, 11), 11);
+            Addr.UpdateBit(BitService.GetBit(T.Value, 12), 12);
+            Addr.UpdateBit(BitService.GetBit(T.Value, 13), 13);
+            Addr.UpdateBit(BitService.GetBit(T.Value, 14), 14);
+
+            //328,336dot
+            IncX();
+            IncX();
+        }
+
+        public int[] PaintScanLine(int y, ref bool spriteHit)
+        {
+            if (y < 0 || y > 239)
+            {
+                throw new ArgumentOutOfRangeException(nameof(y));
+            }
+
+            if (MASK.b == 0)
+            {
+                return Enumerable.Repeat(0x000000FF, 256).ToArray();
+            }
+            
+            List<int> rgba = new List<int>();
+            for (int x = 0; x < 256; x += 8)
+            {
+                if (x % 8 == 0 && x != 0)
+                {
+                    IncX();
+                }
+                
+                VRAMAddrRegister vram = Addr;
+                ushort tileAddress = GetVRAMRealAddr((ushort)(0x2000 | (vram.Value & 0x0FFF)));
+                ushort attributeAddress = (ushort)(0x23C0 | (vram.Value & 0x0C00) | ((vram.Value >> 4) & 0x38) | ((vram.Value >> 2) & 0x07));
+
+                //3.根据vram中的偏移地址，得到pattern table中的数据地址
+                //因为pattern talbe中每16字节为单位，所以需要乘起来
+                int patternTableOffset = m_PPUBus.ReadByte(tileAddress);
+                patternTableOffset *= 16;
+
+                //4.根据CTRL寄存器中的B标识符，判断是在pattern table中的前4k还是后4k
+                if (CTRL.B == 1)
+                {
+                    patternTableOffset += 0x1000;
+                }
+                else if (CTRL.B == 0)
+                {
+                    patternTableOffset += 0x0000;
+                }
+
+                //5.pattern table的数据16字节为一组，分为前8组（调色板的bit0)，和后8组(调色板的bit1)
+                //回到最开头说的大tile,里面包含了16个小tile,因为一个调色板需要4个bit进行定位
+                //pattern table确定了bit1和bit0，bit3和bit4由 跟着name table的attribute决定(64字节，与大title个数一致)
+                byte[] patternData = ReadBlock((ushort)patternTableOffset, 16);
+                Direction direction = GetDirection(vram.CoarseXScroll, vram.CoarseYScroll);
+
+                //6.根据资料4*),得到attribute的地址和值
+                byte attributeData = m_PPUBus.ReadByte(attributeAddress);
+
+                //7.根据方位取得attributeData上的某2位，和pattern name取出来的数据进行组合，得到一个tile的全部颜色
+                byte highPalette;
+                if (direction is Direction.LeftTop)
+                {
+                    //左上,第0和第1位
+                    highPalette = (byte)(attributeData & 0x03);
+                }
+                else if (direction is Direction.RightTop)
+                {
+                    //右上,第2和第3位
+                    highPalette = (byte)((attributeData & 0x0C) >> 2);
+                }
+                else if (direction is Direction.LeftBottom)
+                {
+                    //左下,第5和第4位
+                    highPalette = (byte)((attributeData & 0x30) >> 4);
+                }
+                else
+                {
+                    //右下,第7和第6位
+                    highPalette = (byte)((attributeData & 0xC0) >> 6);
+                }
+
+                highPalette <<= 2; //调色板高位2位确定
+
+                int currentY = y % 8;
+                for (int j = 7; j >= 0; --j)
+                {
+                    int bit0 = BitService.GetBit(patternData[currentY], j);
+                    int bit1 = BitService.GetBit(patternData[8 + currentY], j);
+                    int paletteOffset = highPalette | (bit1 << 1) | bit0;
+                    rgba.Add(GetBackgroundColor(paletteOffset));
+                }
+            }
+
+            //256 dot
+            IncX();
+            IncY();
+            //257dot
+            Addr.UpdateBit(BitService.GetBit(T.Value, 0), 0);
+            Addr.UpdateBit(BitService.GetBit(T.Value, 1), 1);
+            Addr.UpdateBit(BitService.GetBit(T.Value, 2), 2);
+            Addr.UpdateBit(BitService.GetBit(T.Value, 3), 3);
+            Addr.UpdateBit(BitService.GetBit(T.Value, 4), 4);
+            Addr.UpdateBit(BitService.GetBit(T.Value, 10), 10);
+
+            //328&336
+            IncX();
+            IncX();
+
+
+            if (!spriteHit)
+            {
+                int bbb = Palette.GetRGBAColor(m_PPUBus.ReadByte(0x3F00));
+                int[][] sprite = GetSpriteTileColor(0, out int sx, out int sy, out bool visible);
+                //判断当前y和精灵y是否有交集
+                if (y >= sy && y <= sy + 7)
+                {
+                    for (int i = 0; i < 8; ++i)
+                    {
+                        if (sprite[y - sy][i] != bbb && rgba[sx + i] != bbb)
+                        {
+                            if (MASK.s == 1)
+                            {
+                                STATUS.S = 1;
+                                spriteHit = true;
+                            }
+                        }
+                    }
+                }
+            }
+
+            return rgba.ToArray();
         }
 
         public int[][] PaintFrame()
@@ -410,122 +577,6 @@ namespace NesLib.PPU
             }
 
             return frame;
-        }
-
-        public void ScrollingVisibleScanLine()
-        {
-            //参考资料10*)
-            const int VISIBLE_SCAN_LINE_ROW = 240;
-
-            for (int y = 0; y < VISIBLE_SCAN_LINE_ROW; ++y)
-            {
-                for (int x = 0; x < SCAN_LINE_COLUMN; ++x)
-                {
-                    if (x < 256)
-                    {
-                        IncreaseX();
-                    }
-                    else if (x == 256)
-                    {
-                        IncreaseY();
-                    }
-                    else if (x == 257)
-                    {
-                        //参考资料9*)
-                        ushort abcdef = (ushort)(T & 0x41F);
-                        V &= 0xFBE0;
-                        V |= abcdef;
-                    }
-                    else if (x == 328 || x == 336)
-                    {
-                        IncreaseX();
-                    }
-                }
-            }
-        }
-
-        public void ScrollingPreRenderLine()
-        {
-            //参考资料10*)
-            for (int x = 0; x < SCAN_LINE_COLUMN; ++x)
-            {
-                if (x < 256)
-                {
-                    IncreaseX();
-                }
-                else if (x == 256)
-                {
-                    IncreaseY();
-                }
-                else if (x == 257)
-                {
-                    //参考资料9*)
-                    ushort abcdef = (ushort)(T & 0x41F);
-                    V &= 0xFBE0;
-                    V |= abcdef;
-                }
-                else if (x >= 280 && x <= 304)
-                {
-                    //参考资料9*)
-                    //During dots 280 to 304 of the pre-render scanline (end of vblank)
-
-                    ushort ghiabcdef = (ushort)(T & 0xFBE0);
-                    V &= 0x841F;
-                    V |= ghiabcdef;
-                }
-                else if (x == 328 || x == 336)
-                {
-                    IncreaseX();
-                }
-            }
-        }
-
-        private void IncreaseX()
-        {
-            //参考资料9*)
-            unchecked 
-            {
-                if ((V & 0x001F) == 31)
-                {
-                    V &= (ushort)~0x001F;
-                    V ^= 0x0400;
-                }
-                else
-                {
-                    V += 1;
-                }
-            }
-        }
-
-        private void IncreaseY()
-        {
-            //参考资料9*)
-            unchecked
-            {
-                if ((V & 0x7000) != 0x7000)
-                {
-                    V += 0x1000;
-                }
-                else
-                {
-                    V &= (ushort)~0x7000;
-                    ushort y = (ushort)((V & 0x03E0) >> 5);
-                    if (y == 29)
-                    {
-                        y = 0;
-                        V ^= 0x0800;
-                    }
-                    else if (y == 31)
-                    {
-                        y = 0;
-                    }
-                    else
-                    {
-                        y += 1;
-                    }
-                    V = (ushort)((V & (ushort)~0x03E0) | (ushort)(y << 5));
-                }
-            }
         }
 
         private byte[] ReadBlock(ushort addr, int length)
@@ -633,6 +684,115 @@ namespace NesLib.PPU
             }
 
             return data;
+        }
+
+        private ushort GetVRAMRealAddr(ushort addr)
+        {
+            if (m_MirroringMode is MirroringMode.Horizontal)
+            {
+                if (addr < 0x2800)
+                {
+                    return (ushort)(addr & 0x23FF);
+                }
+                else
+                {
+                    return (ushort)(addr & 0x2BFF);
+                }
+            }
+            else if (m_MirroringMode is MirroringMode.Vertical)
+            {
+                if (addr >= 0x2000 && addr < 0x2800)
+                {
+                    return addr;
+                }
+                else
+                {
+                    return (ushort)(addr - 0x800);
+                }
+            }
+            throw new Exception("未知镜像");
+        }
+
+        private ushort GetVRAMBaseRealAddr(ushort addr)
+        {
+            if (m_MirroringMode is MirroringMode.Horizontal)
+            {
+                if (addr < 0x2800)
+                {
+                    return 0x2000;
+                }
+                else
+                {
+                    return 0x2800;
+                }
+            }
+            else if (m_MirroringMode is MirroringMode.Vertical)
+            {
+                if (addr < 0x2400)
+                {
+                    return 0x2000;
+                }
+                else if (addr < 0x2800)
+                {
+                    return 0x2400;
+                }
+                else if (addr < 0x2C00)
+                {
+                    return 0x2000;
+                }
+                else 
+                {
+                    return 0x2400;
+                }
+            }
+            throw new Exception("未知镜像");
+        }
+
+        public void IncX()
+        {
+            ushort tmpAddr = Addr.Value;
+            if ((tmpAddr & 0x1F) == 31)
+            {
+                tmpAddr = (ushort)(tmpAddr & ~0x001F);
+                tmpAddr ^= 0x400;
+                Addr.SetValue(tmpAddr);
+            }
+            else
+            {
+                Addr.SetValue(++tmpAddr);
+            }
+        }
+
+        public void IncY()
+        {
+            ushort tmpAddr = Addr.Value;
+            if ((tmpAddr & 0x7000) != 0x7000)
+            {
+                tmpAddr += 0x1000;
+            }
+            else
+            {
+                tmpAddr = (ushort)(tmpAddr & ~0x7000);
+                int y = (tmpAddr & 0x03E0) >> 5;
+
+                if (y == 29)
+                {
+                    y = 0;
+                    tmpAddr ^= 0x0800;
+                }
+                else if (y == 31)
+                {
+                    y = 0;
+                }
+                else
+                {
+                    y += 1;
+                }
+
+                tmpAddr = (ushort)((tmpAddr & ~0x03E0) | (y << 5));
+            }
+
+            Addr.SetValue(tmpAddr);
         }
     }
 }

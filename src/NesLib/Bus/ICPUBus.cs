@@ -17,5 +17,7 @@ namespace NesLib.Bus
         void ConnectCartridge(ICartridge cartidge);
         void ConnectPPU(IPPU2C02 ppu);
         void ConnectJoyStock(IJoyStick p1Joystick, IJoyStick p2Joystick);
+
+        void SetDMACycles(Action dmaCycle);
     }
 }

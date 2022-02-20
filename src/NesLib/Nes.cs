@@ -55,7 +55,7 @@ namespace NesLib
             m_PPU2C02.SwitchNameTableMirroring(m_Cartridge.MirroringMode);
         }
 
-        public void PowerUp()
+        public void PowerUp(Action<int[][]> paintCallback)
         {
             m_CPUBus.ConnectRAM(m_RAM);
             m_CPUBus.ConnectPPU(m_PPU2C02);
@@ -69,28 +69,38 @@ namespace NesLib
             {
                 //时序参考资料2*)
 
-                //1.0-230行，共240行visible 扫描线
-                m_CPU6502.TickTock(240);
-                m_PPU2C02.ScrollingVisibleScanLine();
+                //1.0-239行，共240行visible 扫描线
+                int[][] frame = new int[240][];
+                bool hit = false;
+                
+                for (int i = 0; i < 240; ++i)
+                {
+                    m_CPU6502.TickTock(1);
+                    int[] scanline = m_PPU2C02.PaintScanLine(i, ref hit);
+                    frame[i] = scanline;
+                }
+
+                paintCallback?.Invoke(frame);
+                //m_PPU2C02.ScrollingVisibleScanLine();
 
                 //2.240-260行，空行,241行,第1个点（0开始算) set vblank flag
                 //这里不需要太精确，直接先vblank然后跑21行空行
 
                 //VBLANK，参考资料1*)
+                m_CPU6502.TickTock(1);
                 m_PPU2C02.STATUS.V = 1;
-
                 if (m_PPU2C02.CTRL.V == 1)
                 {
                     m_CPU6502.NMI();
                 }
-                m_CPU6502.TickTock(21);
+                m_PPU2C02.Addr.SetValue(m_PPU2C02.T.Value);
+                m_CPU6502.TickTock(20);
 
                 //3.261行，预扫描行，第1个点（0开始算）clear vblank flag; sprite 0 hits;sprite overflow;
-                m_PPU2C02.STATUS.S = 0;
+                m_PPU2C02.PreRenderLine();
+                m_PPU2C02.STATUS.SetValue(0);
                 m_CPU6502.TickTock(1);
-                m_PPU2C02.ScrollingPreRenderLine();
 
-                m_PPU2C02.PaintFrame();
                 m_CPU6502.ResetCycles();
             }
         }

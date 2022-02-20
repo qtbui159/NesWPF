@@ -51,10 +51,21 @@ namespace NesLib.CPU
         public CPU6502(ICPUBus cpuBus)
         {
             m_CPUBus = cpuBus;
+            m_CPUBus.SetDMACycles(DMACycle);
 
             P = new ProcessorStatusRegister();
             m_OPCodeMapImpl = new Dictionary<int, Action<byte>>();
             InitOPCode();
+        }
+
+        private void DMACycle()
+        {
+            if (Cycles % 2 == 0)
+            {
+                Cycles++;
+            }
+
+            Cycles += 513;
         }
 
         /// <summary>
@@ -205,7 +216,7 @@ namespace NesLib.CPU
         public void TickTock(int scanlineCount)
         {
             //一条扫描线的cpu指令周期为113.666667
-            int needRunCycles = (int)Math.Ceiling(113.0 * 2 / 3 * scanlineCount);
+            int needRunCycles = (int)Math.Ceiling((113 + 2.0 / 3) * scanlineCount);
             long endCycles = Cycles + needRunCycles;
             while (Cycles <= endCycles)
             {

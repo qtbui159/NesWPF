@@ -28,14 +28,9 @@ namespace NesWPF
         WriteableBitmap wb = new WriteableBitmap(256, 240, 72, 72, PixelFormats.Pbgra32, null);
         WriteableBitmap wb1 = new WriteableBitmap(256, 240, 72, 72, PixelFormats.Pbgra32, null);
 
-        DispatcherTimer m_Timer = new DispatcherTimer();
-
         public MainWindow()
         {
             InitializeComponent();
-
-            m_Timer.Interval = TimeSpan.FromMilliseconds(10);
-            m_Timer.Tick += M_Timer_Tick;
         }
 
         private void M_Timer_Tick(object sender, EventArgs e)
@@ -50,11 +45,41 @@ namespace NesWPF
 
             new Thread(() =>
             {
-                nes.PowerUp();
+                nes.PowerUp(Paint);
             }).Start();
 
             img.Source = wb;
             img1.Source = wb1;
+        }
+
+        private void Paint(int[][] rgba)
+        {
+            byte[] data = new byte[256 * 240 * 4];
+            
+            int count = 0;
+            for (int i = 0; i < rgba.Length; ++i)
+            {
+                for (int j = 0; j < rgba[i].Length; ++j)
+                {
+                    byte r = (byte)(rgba[i][j] >> 24);
+                    byte g = (byte)(rgba[i][j] >> 16);
+                    g &= 0xFF;
+                    byte b = (byte)(rgba[i][j] >> 8);
+                    b &= 0xFF;
+                    byte a = (byte)(rgba[i][j] & 0xFF);
+                    data[count++] = b;
+                    data[count++] = g;
+                    data[count++] = r;
+                    data[count++] = a;
+                }
+            }
+
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                wb.Lock();
+                wb.WritePixels(new Int32Rect(0 * 8, 0 * 8, 256, 240), data, 256 * 4, 0);
+                wb.Unlock();
+            });
         }
 
         private void Button_Click2(object sender, RoutedEventArgs e)
@@ -98,11 +123,6 @@ namespace NesWPF
             wb.WritePixels(new Int32Rect(0 * 8, 0 * 8, 256, 240), data, 256 * 4, 0);
 
             wb.Unlock();
-
-            if (!m_Timer.IsEnabled)
-            {
-                m_Timer.Start();
-            }
         }
 
         private void Button_Click3(object sender, RoutedEventArgs e)
@@ -160,7 +180,7 @@ namespace NesWPF
 
         private void Button_Click4(object sender, RoutedEventArgs e)
         {
-            m_Timer.Stop();
+            
             wb1.Lock();
             for (int block = 63; block >= 0; --block)
             {
@@ -191,7 +211,6 @@ namespace NesWPF
                 wb1.WritePixels(new Int32Rect(x, y, 8, 8), data, 8 * 4, 0);
             }
             wb1.Unlock();
-            m_Timer.Start();
         }
     }
 }

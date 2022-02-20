@@ -11,7 +11,7 @@ namespace NesLib
         /// <summary>
         /// 开机
         /// </summary>
-        void PowerUp();
+        void PowerUp(Action<int[][]> paintCallback);
 
         /// <summary>
         /// 插卡

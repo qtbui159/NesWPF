@@ -24,6 +24,16 @@ namespace Utils
             return (byte)((b & (1 << pos)) != 0 ? 1 : 0);
         }
 
+        public static byte GetBit(ushort b, int pos)
+        {
+            if (pos < 0 || pos > 15)
+            {
+                throw new ArgumentOutOfRangeException(nameof(pos));
+            }
+
+            return (byte)((b & (1 << pos)) != 0 ? 1 : 0);
+        }
+
         /// <summary>
         /// 置bit
         /// </summary>
@@ -35,6 +45,11 @@ namespace Utils
             return (byte)(b | (1 << pos));
         }
 
+        public static ushort SetBit(ushort b, int pos)
+        {
+            return (ushort)(b | (1 << pos));
+        }
+
         /// <summary>
         /// 清bit
         /// </summary>
@@ -43,6 +58,11 @@ namespace Utils
         public static byte ClearBit(byte b, int pos)
         {
             return (byte)(b & ~(1 << pos));
+        }
+
+        public static ushort ClearBit(ushort b, int pos)
+        {
+            return (ushort)(b & ~(1 << pos));
         }
     }
 }

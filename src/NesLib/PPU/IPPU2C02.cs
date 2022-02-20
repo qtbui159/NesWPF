@@ -19,15 +19,9 @@ namespace NesLib.PPU
         STATUSRegister STATUS { get; }
 
         /// <summary>
-        /// 寄存器，实际和Addr相同，为了和文档中的寄存器对应起来
-        /// Current VRAM address (15 bits)
-        /// </summary>
-        ushort V { get; set; }
-
-        /// <summary>
         /// Temporary VRAM address (15 bits); can also be thought of as the address of the top left onscreen tile.
         /// </summary>
-        ushort T { get; set; }
+        VRAMAddrRegister T { get; set; }
 
         /// <summary>
         /// Fine X scroll (3 bits)
@@ -36,8 +30,9 @@ namespace NesLib.PPU
 
         /// <summary>
         /// 显存地址
+        /// V寄存器
         /// </summary>
-        ushort Addr { get; set; }
+        VRAMAddrRegister Addr { get; set; }
 
         /// <summary>
         /// 读缓存
@@ -96,13 +91,12 @@ namespace NesLib.PPU
         int[][] PaintFrame();
 
         /// <summary>
-        /// PPU可视扫描线处理
+        /// 画一条可视扫描线
         /// </summary>
-        void ScrollingVisibleScanLine();
+        /// <param name="y">0-239</param>
+        /// <returns></returns>
+        int[] PaintScanLine(int y, ref bool spriteHit);
 
-        /// <summary>
-        /// PPU预扫描线处理
-        /// </summary>
-        void ScrollingPreRenderLine();
+        void PreRenderLine();
     }
 }
