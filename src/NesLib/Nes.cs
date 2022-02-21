@@ -75,26 +75,31 @@ namespace NesLib
                 
                 for (int i = 0; i < 240; ++i)
                 {
-                    m_CPU6502.TickTock(1);
                     int[] scanline = m_PPU2C02.PaintScanLine(i, ref hit);
+                    m_CPU6502.TickTock(1);
                     frame[i] = scanline;
                 }
 
+                m_PPU2C02.PaintSprite(frame);
                 paintCallback?.Invoke(frame);
-                //m_PPU2C02.ScrollingVisibleScanLine();
 
                 //2.240-260行，空行,241行,第1个点（0开始算) set vblank flag
                 //这里不需要太精确，直接先vblank然后跑21行空行
 
                 //VBLANK，参考资料1*)
-                m_CPU6502.TickTock(1);
-                m_PPU2C02.STATUS.V = 1;
-                if (m_PPU2C02.CTRL.V == 1)
+                for (int i = 0; i < 21; ++i)
                 {
-                    m_CPU6502.NMI();
+                    m_CPU6502.TickTock(1);
+                    if (i == 1)
+                    {
+                        m_PPU2C02.STATUS.V = 1;
+                        if (m_PPU2C02.CTRL.V == 1)
+                        {
+                            m_CPU6502.NMI();
+                        }
+                        m_PPU2C02.Addr.SetValue(m_PPU2C02.T.Value);
+                    }
                 }
-                m_PPU2C02.Addr.SetValue(m_PPU2C02.T.Value);
-                m_CPU6502.TickTock(20);
 
                 //3.261行，预扫描行，第1个点（0开始算）clear vblank flag; sprite 0 hits;sprite overflow;
                 m_PPU2C02.PreRenderLine();

@@ -98,5 +98,7 @@ namespace NesLib.PPU
         int[] PaintScanLine(int y, ref bool spriteHit);
 
         void PreRenderLine();
+
+        void PaintSprite(int[][] background);
     }
 }

@@ -315,28 +315,21 @@ namespace NesLib.PPU
 
                 offset += OAM[block + 1] * 16;
                 byte[] patternData = ReadBlock((ushort)offset, 16);
-                byte[] lowPatternData = patternData.Take(8).ToArray();
-                byte[] highPatternData = patternData.Skip(8).ToArray();
                 byte highPalette = (byte)((OAM[block + 2] & 0x3) << 2);
                 byte horizentalFlip = BitService.GetBit(OAM[block + 2], 6);
                 byte verticalFlip = BitService.GetBit(OAM[block + 2], 7);
                 int[][] r = new int[8][];
-                for (int i = 0; i < lowPatternData.Length; ++i)
+                for (int i = 0; i < 8; ++i)
                 {
                     r[i] = new int[8];
 
                     for (int j = 7; j >= 0; --j)
                     {
-                        int bit0 = BitService.GetBit(lowPatternData[i], j);
-                        int bit1 = BitService.GetBit(highPatternData[i], j);
+                        int bit0 = BitService.GetBit(patternData[i], j);
+                        int bit1 = BitService.GetBit(patternData[i + 8], j);
                         int paletteOffset = highPalette | (bit1 << 1) | bit0;
                         r[i][7 - j] = GetSpriteColor(paletteOffset);
                     }
-                }
-
-                if (count == 0)
-                {
-                    //STATUS.S = 1;
                 }
 
                 if (horizentalFlip == 1)
@@ -521,6 +514,42 @@ namespace NesLib.PPU
             }
 
             return rgba.ToArray();
+        }
+        public void PaintSprite(int[][] background)
+        {
+            if (MASK.s == 0)
+            {
+                return;
+            }
+            int bbb = Palette.GetRGBAColor(m_PPUBus.ReadByte(0x3F00));
+
+            for (int i = 63; i >= 0; --i)
+            {
+                int[][] sprite = GetSpriteTileColor(i, out int x, out int y, out bool visible);
+                if (!visible)
+                {
+                    continue;
+                }
+                if (y >= 240 - 7 || x >= 256 - 7)
+                {
+                    continue;
+                }
+                if (MASK.M == 0 && x == 0)
+                {
+                    continue;
+                }
+
+                for (int py = 0; py < 8; ++py)
+                {
+                    for (int px = 0; px < 8; ++px)
+                    {
+                        if (sprite[py][px] != bbb)
+                        {
+                            background[y + py][x + px] = sprite[py][px];
+                        }
+                    }
+                }
+            }
         }
 
         public int[][] PaintFrame()

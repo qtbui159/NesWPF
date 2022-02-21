@@ -149,7 +149,7 @@ namespace NesWPF
             Button btn = sender as Button;
             if (btn.Name == "down")
             {
-                nes.Down(true);
+                nes.Right(true);
             }
             else if (btn.Name == "start")
             {
@@ -166,7 +166,7 @@ namespace NesWPF
             Button btn = sender as Button;
             if (btn.Name == "down")
             {
-                nes.Down(false);
+                nes.Right(false);
             }
             else if (btn.Name == "start")
             {
