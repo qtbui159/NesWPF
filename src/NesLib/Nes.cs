@@ -65,8 +65,6 @@ namespace NesLib
 
             m_CPU6502.RESET();
 
-            bool first = true;
-
             while (true)
             {
                 //时序参考资料2*)

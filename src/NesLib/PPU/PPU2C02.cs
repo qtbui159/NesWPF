@@ -53,6 +53,7 @@ namespace NesLib.PPU
         private int m_Cycles;
         private Action m_NMI;
         private bool m_EvenFrame;
+        int[][] m_Frame;
 
         public PPU2C02(IPPUBus ppuBus, Action nmiInterrupt)
         {
@@ -73,6 +74,11 @@ namespace NesLib.PPU
             m_Cycles = 0;
             m_NMI = nmiInterrupt;
             m_EvenFrame = true;
+            m_Frame = new int[240][];
+            for (int i = 0; i < m_Frame.Length; i++)
+            {
+                m_Frame[i] = new int[256];
+            }
         }
 
         public void WriteByte(ushort addr, byte data)
@@ -613,79 +619,8 @@ namespace NesLib.PPU
                 //每个cycle都需要先移位寄存器，再进行像素渲染
                 //然后做响应timing中的操作
                 ShiftRegisterLeftMove();
-                RenderOnePixel();
-
-                int key = m_Cycles % 8;
-                if (key == 1)
-                {
-                    //NT byte NameTable 中的 tile 索引
-                    ushort tileAddress = GetVRAMRealAddr((ushort)(0x2000 | (Addr.Value & 0x0FFF)));
-                    Latch.NameTableTileIndex = m_PPUBus.ReadByte(tileAddress);
-                }
-                else if (key == 3)
-                {
-                    //AT byte AttributeTable 中的2位颜色信息
-                    ushort attributeAddress = (ushort)(0x23C0 | (Addr.Value & 0x0C00) | ((Addr.Value >> 4) & 0x38) | ((Addr.Value >> 2) & 0x07));
-                    Direction direction = GetDirection(Addr.CoarseXScroll, Addr.CoarseYScroll);
-                    byte attributeData = m_PPUBus.ReadByte(attributeAddress);
-                    byte highPalette;
-                    if (direction is Direction.LeftTop)
-                    {
-                        highPalette = (byte)(attributeData & 0x03);
-                    }
-                    else if (direction is Direction.RightTop)
-                    {
-                        highPalette = (byte)((attributeData & 0x0C) >> 2);
-                    }
-                    else if (direction is Direction.LeftBottom)
-                    {
-                        highPalette = (byte)((attributeData & 0x30) >> 4);
-                    }
-                    else
-                    {
-                        highPalette = (byte)((attributeData & 0xC0) >> 6);
-                    }
-
-                    Latch.PaletteHigh = highPalette; //调色板高位2位确定
-                }
-                else if (key == 5)
-                {
-                    //Low BG tile byte 根据 tile 索引取 背景tile 低位
-                    int patternTableOffset = m_PPUBus.ReadByte(Latch.NameTableTileIndex);
-                    patternTableOffset = patternTableOffset * 16 + Addr.FineYScroll;
-
-                    if (CTRL.B == 1)
-                    {
-                        patternTableOffset += 0x1000;
-                    }
-                    else if (CTRL.B == 0)
-                    {
-                        patternTableOffset += 0x0000;
-                    }
-
-                    Latch.BackgroundTileLowByte  = m_PPUBus.ReadByte((ushort)patternTableOffset);
-                }
-                else if (key == 7)
-                {
-                    //High BG tile byte 根据 tile 索引取 背景tile 高位
-                    int patternTableOffset = m_PPUBus.ReadByte(Latch.NameTableTileIndex);
-                    patternTableOffset = patternTableOffset * 16 + Addr.FineYScroll + 8;
-
-                    if (CTRL.B == 1)
-                    {
-                        patternTableOffset += 0x1000;
-                    }
-                    else if (CTRL.B == 0)
-                    {
-                        patternTableOffset += 0x0000;
-                    }
-
-                    Latch.BackgroundTileHighByte = m_PPUBus.ReadByte((ushort)patternTableOffset);
-                }
-                else if (key == 0)
-                {
-                    IncX();
-                }
+                PaintOnePixel(m_Cycles, m_Scanline);
+                FetchData();
             }
             else if (m_Cycles == 256)
             {
@@ -699,9 +634,14 @@ namespace NesLib.PPU
             {
                 //Idle
             }
-            else if (m_Cycles >= 321 && m_Cycles <= 340)
+            else if (m_Cycles >= 321 && m_Cycles <= 336)
             {
-
+                ShiftRegisterLeftMove();
+                FetchData();
+            }
+            else if (m_Cycles <= 340)
+            {
+                //NT byte， Unused NTfetches
             }
             else
             {
@@ -730,9 +670,111 @@ namespace NesLib.PPU
             ShiftRegister.AttributeLowByte <<= 1;
         }
 
-        private void RenderOnePixel()
+        private void LatchToRegister()
         {
-            
+            ShiftRegister.TileHighByte = Latch.BackgroundTileHighByte;
+            ShiftRegister.TileLowByte = Latch.BackgroundTileLowByte;
+
+            const byte ZERO_BITS = 0;
+            const byte ONE_BITS = 0xFF;
+
+            byte palette0Bit = BitService.GetBit(Latch.PaletteHighByte, 0);
+            byte palette1Bit = BitService.GetBit(Latch.PaletteHighByte, 1);
+            ShiftRegister.AttributeHighByte = palette1Bit == 1 ? ONE_BITS : ZERO_BITS;
+            ShiftRegister.AttributeLowByte = palette0Bit == 1 ? ONE_BITS : ZERO_BITS;
+        }
+
+        private void FetchData()
+        {
+            int key = m_Cycles % 8;
+            if (key == 1)
+            {
+                //这里每次需要先把latch的值加载到register里面
+                LatchToRegister();
+
+                //NT byte NameTable 中的 tile 索引
+                ushort tileAddress = GetVRAMRealAddr((ushort)(0x2000 | (Addr.Value & 0x0FFF)));
+                Latch.NameTableTileIndex = m_PPUBus.ReadByte(tileAddress);
+            }
+            else if (key == 3)
+            {
+                //AT byte AttributeTable 中的2位颜色信息
+                ushort attributeAddress = (ushort)(0x23C0 | (Addr.Value & 0x0C00) | ((Addr.Value >> 4) & 0x38) | ((Addr.Value >> 2) & 0x07));
+                Direction direction = GetDirection(Addr.CoarseXScroll, Addr.CoarseYScroll);
+                byte attributeData = m_PPUBus.ReadByte(attributeAddress);
+                byte highPalette;
+                if (direction is Direction.LeftTop)
+                {
+                    highPalette = (byte)(attributeData & 0x03);
+                }
+                else if (direction is Direction.RightTop)
+                {
+                    highPalette = (byte)((attributeData & 0x0C) >> 2);
+                }
+                else if (direction is Direction.LeftBottom)
+                {
+                    highPalette = (byte)((attributeData & 0x30) >> 4);
+                }
+                else
+                {
+                    highPalette = (byte)((attributeData & 0xC0) >> 6);
+                }
+
+                Latch.PaletteHighByte = highPalette; //调色板高位2位确定
+            }
+            else if (key == 5)
+            {
+                //Low BG tile byte 根据 tile 索引取 背景tile 低位
+                int patternTableOffset = m_PPUBus.ReadByte(Latch.NameTableTileIndex);
+                patternTableOffset = patternTableOffset * 16 + Addr.FineYScroll;
+
+                if (CTRL.B == 1)
+                {
+                    patternTableOffset += 0x1000;
+                }
+                else if (CTRL.B == 0)
+                {
+                    patternTableOffset += 0x0000;
+                }
+
+                Latch.BackgroundTileLowByte = m_PPUBus.ReadByte((ushort)patternTableOffset);
+            }
+            else if (key == 7)
+            {
+                //High BG tile byte 根据 tile 索引取 背景tile 高位
+                int patternTableOffset = m_PPUBus.ReadByte(Latch.NameTableTileIndex);
+                patternTableOffset = patternTableOffset * 16 + Addr.FineYScroll + 8;
+
+                if (CTRL.B == 1)
+                {
+                    patternTableOffset += 0x1000;
+                }
+                else if (CTRL.B == 0)
+                {
+                    patternTableOffset += 0x0000;
+                }
+
+                Latch.BackgroundTileHighByte = m_PPUBus.ReadByte((ushort)patternTableOffset);
+            }
+            else if (key == 0)
+            {
+                IncX();
+            }
+        }
+
+        /// <summary>
+        /// 绘制一个像素
+        /// </summary>
+        /// <param name="x">0-256像素</param>
+        /// <param name="y">0-240像素</param>
+        private void PaintOnePixel(int x, int y)
+        {
+            byte paletteBit3 = BitService.GetBit(ShiftRegister.AttributeHighByte, 7 - X);
+            byte paletteBit2 = BitService.GetBit(ShiftRegister.AttributeLowByte, 7 - X);
+            byte paletteBit1 = BitService.GetBit(ShiftRegister.TileHighByte, 7 - X);
+            byte paletteBit0 = BitService.GetBit(ShiftRegister.TileLowByte, 7 - X);
+            byte paletteIndex = (byte)(paletteBit3 << 3 | paletteBit2 << 2 | paletteBit1 << 1 | paletteBit0);
+            m_Frame[y][x] = Palette.GetRGBAColor(paletteIndex);
         }
 
         public int[][] PaintFrame()
