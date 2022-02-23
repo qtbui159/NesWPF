@@ -38,7 +38,7 @@ namespace NesLib
             m_CPU6502 = new CPU6502(m_CPUBus);
             m_RAM = new RAM();
             m_PPUBus = new PPUBus();
-            m_PPU2C02 = new PPU2C02(m_PPUBus);
+            m_PPU2C02 = new PPU2C02(m_PPUBus, () => m_CPU6502.NMI());
             m_VRAM = new VRAM();
             m_Palette = new Palette();
             m_Joytick1 = new JoyStick.JoyStick();
@@ -64,6 +64,8 @@ namespace NesLib
             m_PPUBus.ConnectPalette(m_Palette);
 
             m_CPU6502.RESET();
+
+            bool first = true;
 
             while (true)
             {

@@ -70,9 +70,11 @@
     <Compile Include="PPU\CTRLRegister.cs" />
     <Compile Include="PPU\IPalette.cs" />
     <Compile Include="PPU\IPPU2C02.cs" />
+    <Compile Include="PPU\Latch.cs" />
     <Compile Include="PPU\MASKRegister.cs" />
     <Compile Include="PPU\Palette.cs" />
     <Compile Include="PPU\PPU2C02.cs" />
+    <Compile Include="PPU\ShiftRegister.cs" />
     <Compile Include="PPU\STATUSRegister.cs" />
     <Compile Include="PPU\VRAMAddrRegister.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

@@ -46,8 +46,15 @@ namespace NesLib.PPU
         public byte OAMAddr { get; set; }
         public bool WriteX2Flag { get; set; }
         public byte ReadBuffer { get; set; }
+        public ShiftRegister ShiftRegister { get; set; }
+        public Latch Latch { get; set; }
 
-        public PPU2C02(IPPUBus ppuBus)
+        private int m_Scanline;
+        private int m_Cycles;
+        private Action m_NMI;
+        private bool m_EvenFrame;
+
+        public PPU2C02(IPPUBus ppuBus, Action nmiInterrupt)
         {
             m_PPUBus = ppuBus;
 
@@ -59,6 +66,13 @@ namespace NesLib.PPU
             WriteX2Flag = false;
             Addr = new VRAMAddrRegister();
             T = new VRAMAddrRegister();
+            ShiftRegister = new ShiftRegister();
+            Latch = new Latch();
+
+            m_Scanline = 0;
+            m_Cycles = 0;
+            m_NMI = nmiInterrupt;
+            m_EvenFrame = true;
         }
 
         public void WriteByte(ushort addr, byte data)
@@ -552,6 +566,175 @@ namespace NesLib.PPU
             }
         }
 
+        public void Ticktock()
+        {
+            try
+            {
+                if (MASK.m == 0 || MASK.s == 0)
+                {
+                    return;
+                }
+
+                if (m_Scanline >= 0 && m_Scanline <= 239)
+                {
+                    HandleVisibleScanLine();
+                }
+                else if (m_Scanline == 240)
+                {
+                    HandlePostRenderLine();
+                }
+                else if (m_Scanline >= 241 && m_Scanline <= 260)
+                {
+                    HandleVBlank();
+                }
+                else if (m_Scanline == 261)
+                {
+                    HandlePreRenderLine();
+                }
+                else
+                {
+                    throw new Exception($"未知扫描线{m_Scanline}");
+                }
+            }
+            finally
+            {
+                ++m_Cycles;
+            }
+        }
+
+        private void HandleVisibleScanLine()
+        {
+            if (m_Cycles == 0)
+            {
+                //Idle
+            }
+            else if (m_Cycles >= 1 && m_Cycles <= 255)
+            {
+                //每个cycle都需要先移位寄存器，再进行像素渲染
+                //然后做响应timing中的操作
+                ShiftRegisterLeftMove();
+                RenderOnePixel();
+
+                int key = m_Cycles % 8;
+                if (key == 1)
+                {
+                    //NT byte NameTable 中的 tile 索引
+                    ushort tileAddress = GetVRAMRealAddr((ushort)(0x2000 | (Addr.Value & 0x0FFF)));
+                    Latch.NameTableTileIndex = m_PPUBus.ReadByte(tileAddress);
+                }
+                else if (key == 3)
+                {
+                    //AT byte AttributeTable 中的2位颜色信息
+                    ushort attributeAddress = (ushort)(0x23C0 | (Addr.Value & 0x0C00) | ((Addr.Value >> 4) & 0x38) | ((Addr.Value >> 2) & 0x07));
+                    Direction direction = GetDirection(Addr.CoarseXScroll, Addr.CoarseYScroll);
+                    byte attributeData = m_PPUBus.ReadByte(attributeAddress);
+                    byte highPalette;
+                    if (direction is Direction.LeftTop)
+                    {
+                        highPalette = (byte)(attributeData & 0x03);
+                    }
+                    else if (direction is Direction.RightTop)
+                    {
+                        highPalette = (byte)((attributeData & 0x0C) >> 2);
+                    }
+                    else if (direction is Direction.LeftBottom)
+                    {
+                        highPalette = (byte)((attributeData & 0x30) >> 4);
+                    }
+                    else
+                    {
+                        highPalette = (byte)((attributeData & 0xC0) >> 6);
+                    }
+
+                    Latch.PaletteHigh = highPalette; //调色板高位2位确定
+                }
+                else if (key == 5)
+                {
+                    //Low BG tile byte 根据 tile 索引取 背景tile 低位
+                    int patternTableOffset = m_PPUBus.ReadByte(Latch.NameTableTileIndex);
+                    patternTableOffset = patternTableOffset * 16 + Addr.FineYScroll;
+
+                    if (CTRL.B == 1)
+                    {
+                        patternTableOffset += 0x1000;
+                    }
+                    else if (CTRL.B == 0)
+                    {
+                        patternTableOffset += 0x0000;
+                    }
+
+                    Latch.BackgroundTileLowByte  = m_PPUBus.ReadByte((ushort)patternTableOffset);
+                }
+                else if (key == 7)
+                {
+                    //High BG tile byte 根据 tile 索引取 背景tile 高位
+                    int patternTableOffset = m_PPUBus.ReadByte(Latch.NameTableTileIndex);
+                    patternTableOffset = patternTableOffset * 16 + Addr.FineYScroll + 8;
+
+                    if (CTRL.B == 1)
+                    {
+                        patternTableOffset += 0x1000;
+                    }
+                    else if (CTRL.B == 0)
+                    {
+                        patternTableOffset += 0x0000;
+                    }
+
+                    Latch.BackgroundTileHighByte = m_PPUBus.ReadByte((ushort)patternTableOffset);
+                }
+                else if (key == 0)
+                {
+                    IncX();
+                }
+            }
+            else if (m_Cycles == 256)
+            {
+                IncY();
+            }
+            else if (m_Cycles == 257)
+            {
+                TxToVx();
+            }
+            else if (m_Cycles >= 258 && m_Cycles <= 320)
+            {
+                //Idle
+            }
+            else if (m_Cycles >= 321 && m_Cycles <= 340)
+            {
+
+            }
+            else
+            {
+                throw new Exception($"未知的dot{m_Cycles}");
+            }
+        }
+
+        private void HandlePostRenderLine()
+        { 
+        }
+
+        private void HandleVBlank()
+        { 
+        }
+
+        private void HandlePreRenderLine()
+        { 
+        }
+
+        private void ShiftRegisterLeftMove()
+        {
+            //因为绘制过程是高7bit 6bit 5bit，所以是左移
+            ShiftRegister.TileHighByte <<= 1;
+            ShiftRegister.TileLowByte <<= 1;
+            ShiftRegister.AttributeHighByte <<= 1;
+            ShiftRegister.AttributeLowByte <<= 1;
+        }
+
+        private void RenderOnePixel()
+        {
+            
+        }
+
         public int[][] PaintFrame()
         {
             int bbb = Palette.GetRGBAColor(m_PPUBus.ReadByte(0x3F00));
@@ -822,6 +1005,16 @@ namespace NesLib.PPU
             }
 
             Addr.SetValue(tmpAddr);
+        }
+
+        public void TxToVx()
+        {
+            Addr.UpdateBit(BitService.GetBit(T.Value, 0), 0);
+            Addr.UpdateBit(BitService.GetBit(T.Value, 1), 1);
+            Addr.UpdateBit(BitService.GetBit(T.Value, 2), 2);
+            Addr.UpdateBit(BitService.GetBit(T.Value, 3), 3);
+            Addr.UpdateBit(BitService.GetBit(T.Value, 4), 4);
+            Addr.UpdateBit(BitService.GetBit(T.Value, 10), 10);
         }
     }
 }
