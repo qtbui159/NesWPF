@@ -42,6 +42,8 @@ namespace NesLib.PPU
         /// </summary>
         public byte[] OAM => m_OAM;
         private byte[] m_OAM;
+        private byte[] m_SecondaryOAM;
+        private int m_SecondaryOAMCount = 0;
 
         public byte OAMAddr { get; set; }
         public bool WriteX2Flag { get; set; }
@@ -64,6 +66,8 @@ namespace NesLib.PPU
             MASK = new MASKRegister();
             STATUS = new STATUSRegister();
             m_OAM = new byte[256];
+            m_SecondaryOAM = new byte[8]; //存储8个OAM的索引
+            m_SecondaryOAMCount = 0;
             OAMAddr = 0;
             WriteX2Flag = false;
             Addr = new VRAMAddrRegister();
@@ -321,6 +325,7 @@ namespace NesLib.PPU
             y = 0;
             return null;
         }
+
 
         private int[][] GetSpriteTileColor(int count, out int x, out int y, out bool visible)
         {
@@ -631,12 +636,19 @@ namespace NesLib.PPU
             }
             else if (m_Cycles >= 1 && m_Cycles <= 256)
             {
+                if (m_Cycles == 1)
+                {
+                    ResetSecondaryOAM();
+                    CalculateSprite();
+                }
+
                 //每个cycle都需要先移位寄存器，再进行像素渲染
                 //然后做响应timing中的操作
                 ShiftRegisterLeftMove();
                 PaintOnePixel(m_Cycles - 1, m_Scanline);
+                PaintSprite(m_Cycles - 1, m_Scanline);
                 FetchData();
-
+                
                 if (m_Cycles == 256)
                 {
                     IncY();
@@ -870,6 +882,77 @@ namespace NesLib.PPU
             byte paletteBit0 = BitService.GetBit(ShiftRegister.TileLowByte, 15 - X);
             byte paletteIndex = (byte)((paletteBit3 << 3) | (paletteBit2 << 2) | (paletteBit1 << 1) | paletteBit0);
             m_Frame[y][x] = GetBackgroundColor(paletteIndex);
+        }
+
+        private void ResetSecondaryOAM()
+        {
+            for (int i = 0; i < m_SecondaryOAM.Length; ++i)
+            {
+                m_SecondaryOAM[i] = 0xFF;
+            }
+            m_SecondaryOAMCount = 0;
+        }
+
+        private void PaintSprite(int x, int y)
+        {
+            int transparentColor = Palette.GetRGBAColor(m_PPUBus.ReadByte(0x3F00));
+            const int width = 8 - 1;
+            int height = CTRL.H == 1 ? 16 : 8;
+            for (int i = m_SecondaryOAMCount - 1; i >= 0; --i)
+            {
+                //按优先级来
+                int[][] sprite = GetSpriteTileColor(m_SecondaryOAM[i], out int sx, out int sy, out bool visible);
+                int realY = y - sy;
+                if (!(x >= sx && x <= sx + width))
+                {
+                    continue;
+                }
+
+                int color = sprite[realY][x - sx];
+                if (i == 0)
+                {
+                    //检测sprite 0 hit
+                    if (color != transparentColor || m_Frame[y][x] != transparentColor)
+                    {
+                        STATUS.S = 1;
+                    }
+                }
+
+                if (color != transparentColor && visible)
+                {
+                    m_Frame[y][x] = sprite[realY][x - sx];
+                }
+            }
+        }
+
+        private void CalculateSprite()
+        {
+            if (MASK.s == 0)
+            {
+                return;
+            }
+
+            int spriteHeight = CTRL.H == 1 ? 16 : 8;
+            spriteHeight -= 1;
+
+            for (int i = 0; i < OAM.Length / 4; ++i)
+            {
+                byte y = OAM[4 * i];
+                if (y >= 0xEF)
+                {
+                    continue;
+                }
+                if (y <= m_Scanline && m_Scanline <= y + spriteHeight)
+                {
+                    m_SecondaryOAM[m_SecondaryOAMCount++] = (byte)i;
+
+                    if (m_SecondaryOAMCount >= 8)
+                    {
+                        STATUS.O = 1;
+                        break;
+                    }
+                }
+            }
         }
 
         public int[][] PaintFrame()
