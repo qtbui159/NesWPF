@@ -10,7 +10,7 @@ namespace NesLib.PPU
     {
         public ushort TileHighByte { get; set; }
         public ushort TileLowByte { get; set; }
-        public byte AttributeLowByte { get; set; }
-        public byte AttributeHighByte { get; set; }
+        public ushort AttributeLowByte { get; set; }
+        public ushort AttributeHighByte { get; set; }
     }
 }

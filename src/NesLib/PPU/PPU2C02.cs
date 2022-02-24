@@ -52,10 +52,11 @@ namespace NesLib.PPU
         private int m_Scanline;
         private int m_Cycles;
         private Action m_NMI;
+        private Action<int[][]> m_FrameRender;
         private bool m_EvenFrame;
         int[][] m_Frame;
 
-        public PPU2C02(IPPUBus ppuBus, Action nmiInterrupt)
+        public PPU2C02(IPPUBus ppuBus, Action nmiInterrupt, Action<int[][]> frameRender)
         {
             m_PPUBus = ppuBus;
 
@@ -73,6 +74,7 @@ namespace NesLib.PPU
             m_Scanline = 0;
             m_Cycles = 0;
             m_NMI = nmiInterrupt;
+            m_FrameRender = frameRender;
             m_EvenFrame = true;
             m_Frame = new int[240][];
             for (int i = 0; i < m_Frame.Length; i++)
@@ -576,11 +578,6 @@ namespace NesLib.PPU
         {
             try
             {
-                if (MASK.m == 0 || MASK.s == 0)
-                {
-                    return;
-                }
-
                 if (m_Scanline >= 0 && m_Scanline <= 239)
                 {
                     HandleVisibleScanLine();
@@ -605,26 +602,45 @@ namespace NesLib.PPU
             finally
             {
                 ++m_Cycles;
+
+                if (m_Cycles == 341)
+                {
+                    m_Cycles = 0;
+                    ++m_Scanline;
+                    if (m_Scanline == 262)
+                    {
+                        m_Scanline = 0;
+                        m_Cycles = 0;
+
+                        m_FrameRender?.Invoke(m_Frame);
+                    }
+                }
             }
         }
 
         private void HandleVisibleScanLine()
         {
+            if (MASK.m == 0 || MASK.s == 0)
+            {
+                return;
+            }
+
             if (m_Cycles == 0)
             {
                 //Idle
             }
-            else if (m_Cycles >= 1 && m_Cycles <= 255)
+            else if (m_Cycles >= 1 && m_Cycles <= 256)
             {
                 //每个cycle都需要先移位寄存器，再进行像素渲染
                 //然后做响应timing中的操作
                 ShiftRegisterLeftMove();
-                PaintOnePixel(m_Cycles, m_Scanline);
+                PaintOnePixel(m_Cycles - 1, m_Scanline);
                 FetchData();
-            }
-            else if (m_Cycles == 256)
-            {
-                IncY();
+
+                if (m_Cycles == 256)
+                {
+                    IncY();
+                }
             }
             else if (m_Cycles == 257)
             {
@@ -650,19 +666,92 @@ namespace NesLib.PPU
         }
 
         private void HandlePostRenderLine()
-        { 
+        {
+            //什么都不用做
         }
 
         private void HandleVBlank()
-        { 
+        {
+            if (m_Scanline == 241 && m_Cycles == 1)
+            {
+                STATUS.V = 1;
+                if (CTRL.V == 1)
+                { 
+                    m_NMI?.Invoke();
+                }
+            }
         }
 
         private void HandlePreRenderLine()
-        { 
+        {
+            if (MASK.m == 0 || MASK.s == 0)
+            {
+                return;
+            }
+
+            if (m_Cycles == 1)
+            {
+                STATUS.SetValue(0);
+            }
+
+            if (m_Cycles == 0)
+            {
+                //Idle
+            }
+            else if (m_Cycles >= 1 && m_Cycles <= 256)
+            {
+                //每个cycle都需要先移位寄存器，再进行像素渲染
+                //然后做响应timing中的操作
+                ShiftRegisterLeftMove();
+                FetchData();
+
+                if (m_Cycles == 256)
+                {
+                    IncY();
+                }
+            }
+            else if (m_Cycles == 257)
+            {
+                TxToVx();
+            }
+            else if (m_Cycles >= 258 && m_Cycles <= 320)
+            {
+                if (m_Cycles >= 280 && m_Cycles <= 305)
+                {
+                    Addr.UpdateBit(BitService.GetBit(T.Value, 5), 5);
+                    Addr.UpdateBit(BitService.GetBit(T.Value, 6), 6);
+                    Addr.UpdateBit(BitService.GetBit(T.Value, 7), 7);
+                    Addr.UpdateBit(BitService.GetBit(T.Value, 8), 8);
+                    Addr.UpdateBit(BitService.GetBit(T.Value, 9), 9);
+
+                    Addr.UpdateBit(BitService.GetBit(T.Value, 11), 11);
+                    Addr.UpdateBit(BitService.GetBit(T.Value, 12), 12);
+                    Addr.UpdateBit(BitService.GetBit(T.Value, 13), 13);
+                    Addr.UpdateBit(BitService.GetBit(T.Value, 14), 14);
+                }
+            }
+            else if (m_Cycles >= 321 && m_Cycles <= 336)
+            {
+                ShiftRegisterLeftMove();
+                FetchData();
+            }
+            else if (m_Cycles <= 340)
+            {
+                //NT byte， Unused NTfetches
+            }
+            else
+            {
+                throw new Exception($"未知的dot{m_Cycles}");
+            }
         }
 
         private void ShiftRegisterLeftMove()
         {
+            if (MASK.m == 0)
+            {
+                return;
+            }
+
             //因为绘制过程是高7bit 6bit 5bit，所以是左移
             ShiftRegister.TileHighByte <<= 1;
             ShiftRegister.TileLowByte <<= 1;
@@ -672,20 +761,26 @@ namespace NesLib.PPU
 
         private void LatchToRegister()
         {
-            ShiftRegister.TileHighByte = Latch.BackgroundTileHighByte;
-            ShiftRegister.TileLowByte = Latch.BackgroundTileLowByte;
+            ShiftRegister.TileHighByte |= Latch.BackgroundTileHighByte;
+            ShiftRegister.TileLowByte |= Latch.BackgroundTileLowByte;
 
             const byte ZERO_BITS = 0;
             const byte ONE_BITS = 0xFF;
 
             byte palette0Bit = BitService.GetBit(Latch.PaletteHighByte, 0);
+            ShiftRegister.AttributeLowByte |= palette0Bit == 1 ? ONE_BITS : ZERO_BITS;
+
             byte palette1Bit = BitService.GetBit(Latch.PaletteHighByte, 1);
-            ShiftRegister.AttributeHighByte = palette1Bit == 1 ? ONE_BITS : ZERO_BITS;
-            ShiftRegister.AttributeLowByte = palette0Bit == 1 ? ONE_BITS : ZERO_BITS;
+            ShiftRegister.AttributeHighByte |= palette1Bit == 1 ? ONE_BITS : ZERO_BITS;
         }
 
         private void FetchData()
         {
+            if (MASK.m == 0)
+            {
+                return;
+            }
+
             int key = m_Cycles % 8;
             if (key == 1)
             {
@@ -725,7 +820,7 @@ namespace NesLib.PPU
             else if (key == 5)
             {
                 //Low BG tile byte 根据 tile 索引取 背景tile 低位
-                int patternTableOffset = m_PPUBus.ReadByte(Latch.NameTableTileIndex);
+                int patternTableOffset = Latch.NameTableTileIndex;
                 patternTableOffset = patternTableOffset * 16 + Addr.FineYScroll;
 
                 if (CTRL.B == 1)
@@ -742,7 +837,7 @@ namespace NesLib.PPU
             else if (key == 7)
             {
                 //High BG tile byte 根据 tile 索引取 背景tile 高位
-                int patternTableOffset = m_PPUBus.ReadByte(Latch.NameTableTileIndex);
+                int patternTableOffset = Latch.NameTableTileIndex;
                 patternTableOffset = patternTableOffset * 16 + Addr.FineYScroll + 8;
 
                 if (CTRL.B == 1)
@@ -769,12 +864,12 @@ namespace NesLib.PPU
         /// <param name="y">0-240像素</param>
         private void PaintOnePixel(int x, int y)
         {
-            byte paletteBit3 = BitService.GetBit(ShiftRegister.AttributeHighByte, 7 - X);
-            byte paletteBit2 = BitService.GetBit(ShiftRegister.AttributeLowByte, 7 - X);
-            byte paletteBit1 = BitService.GetBit(ShiftRegister.TileHighByte, 7 - X);
-            byte paletteBit0 = BitService.GetBit(ShiftRegister.TileLowByte, 7 - X);
-            byte paletteIndex = (byte)(paletteBit3 << 3 | paletteBit2 << 2 | paletteBit1 << 1 | paletteBit0);
-            m_Frame[y][x] = Palette.GetRGBAColor(paletteIndex);
+            byte paletteBit3 = BitService.GetBit(ShiftRegister.AttributeHighByte, 15 - X);
+            byte paletteBit2 = BitService.GetBit(ShiftRegister.AttributeLowByte, 15 - X);
+            byte paletteBit1 = BitService.GetBit(ShiftRegister.TileHighByte, 15 - X);
+            byte paletteBit0 = BitService.GetBit(ShiftRegister.TileLowByte, 15 - X);
+            byte paletteIndex = (byte)((paletteBit3 << 3) | (paletteBit2 << 2) | (paletteBit1 << 1) | paletteBit0);
+            m_Frame[y][x] = GetBackgroundColor(paletteIndex);
         }
 
         public int[][] PaintFrame()

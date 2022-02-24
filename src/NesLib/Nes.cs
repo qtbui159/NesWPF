@@ -32,13 +32,15 @@ namespace NesLib
         private readonly IJoyStick m_Joytick2;
         private ICartridge m_Cartridge;
 
+        private Action<int[][]> fuck;
+
         public Nes()
         {
             m_CPUBus = new CPUBus();
             m_CPU6502 = new CPU6502(m_CPUBus);
             m_RAM = new RAM();
             m_PPUBus = new PPUBus();
-            m_PPU2C02 = new PPU2C02(m_PPUBus, () => m_CPU6502.NMI());
+            m_PPU2C02 = new PPU2C02(m_PPUBus, () => m_CPU6502.NMI(), x => fuck(x));
             m_VRAM = new VRAM();
             m_Palette = new Palette();
             m_Joytick1 = new JoyStick.JoyStick();
@@ -65,48 +67,14 @@ namespace NesLib
 
             m_CPU6502.RESET();
 
+            fuck = paintCallback;
+
             while (true)
             {
-                //时序参考资料2*)
-
-                //1.0-239行，共240行visible 扫描线
-                int[][] frame = new int[240][];
-                bool hit = false;
-                
-                for (int i = 0; i < 240; ++i)
-                {
-                    int[] scanline = m_PPU2C02.PaintScanLine(i, ref hit);
-                    m_CPU6502.TickTock(1);
-                    frame[i] = scanline;
-                }
-
-                m_PPU2C02.PaintSprite(frame);
-                paintCallback?.Invoke(frame);
-
-                //2.240-260行，空行,241行,第1个点（0开始算) set vblank flag
-                //这里不需要太精确，直接先vblank然后跑21行空行
-
-                //VBLANK，参考资料1*)
-                for (int i = 0; i < 21; ++i)
-                {
-                    m_CPU6502.TickTock(1);
-                    if (i == 1)
-                    {
-                        m_PPU2C02.STATUS.V = 1;
-                        if (m_PPU2C02.CTRL.V == 1)
-                        {
-                            m_CPU6502.NMI();
-                        }
-                        m_PPU2C02.Addr.SetValue(m_PPU2C02.T.Value);
-                    }
-                }
-
-                //3.261行，预扫描行，第1个点（0开始算）clear vblank flag; sprite 0 hits;sprite overflow;
-                m_PPU2C02.PreRenderLine();
-                m_PPU2C02.STATUS.SetValue(0);
-                m_CPU6502.TickTock(1);
-
-                m_CPU6502.ResetCycles();
+                m_CPU6502.TickTock();
+                m_PPU2C02.Ticktock();
+                m_PPU2C02.Ticktock();
+                m_PPU2C02.Ticktock();
             }
         }
 

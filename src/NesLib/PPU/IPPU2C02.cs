@@ -100,5 +100,7 @@ namespace NesLib.PPU
         void PreRenderLine();
 
         void PaintSprite(int[][] background);
+
+        void Ticktock();
     }
 }
