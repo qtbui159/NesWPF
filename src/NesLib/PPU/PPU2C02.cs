@@ -18,6 +18,7 @@ using Utils;
 //8*)https://wiki.nesdev.org/w/index.php?title=PPU_sprite_evaluation
 //9*)https://wiki.nesdev.org/w/index.php?title=PPU_scrolling#At_dot_256_of_each_scanline
 //10*)https://wiki.nesdev.org/w/images/4/4f/Ppu.svg
+//11*)https://wiki.nesdev.org/w/index.php?title=PPU_rendering
 
 namespace NesLib.PPU
 {
@@ -585,6 +586,7 @@ namespace NesLib.PPU
 
         public void Ticktock()
         {
+            //这里的实现根据资料11*)和参考一些开源项目完成，因为资料里面也没说很清楚
             try
             {
                 if (m_Scanline >= 0 && m_Scanline <= 239)
@@ -1000,8 +1002,8 @@ namespace NesLib.PPU
                 byte highPatternData;
                 if (verticalFlip == 1)
                 {
-                    lowPatternData = m_PPUBus.ReadByte((ushort)(offset + 7 - m_Scanline - y));
-                    highPatternData = m_PPUBus.ReadByte((ushort)(offset + 7 - m_Scanline - y + 8));
+                    lowPatternData = m_PPUBus.ReadByte((ushort)(offset + 7 - (m_Scanline - y)));
+                    highPatternData = m_PPUBus.ReadByte((ushort)(offset + 7 - (m_Scanline - y) + 8));
                 }
                 else
                 {
