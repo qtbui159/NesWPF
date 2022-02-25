@@ -57,6 +57,8 @@ namespace NesLib.PPU
         private Action<int[][]> m_FrameRender;
         private bool m_EvenFrame;
         int[][] m_Frame;
+        int[] m_SpriteData;
+        bool m_Sprit0Hits = false;
 
         public PPU2C02(IPPUBus ppuBus, Action nmiInterrupt, Action<int[][]> frameRender)
         {
@@ -85,6 +87,8 @@ namespace NesLib.PPU
             {
                 m_Frame[i] = new int[256];
             }
+            m_SpriteData = new int[256 * 2]; //弄大一点，避免越界
+            m_Sprit0Hits = false;
         }
 
         public void WriteByte(ushort addr, byte data)
@@ -618,6 +622,8 @@ namespace NesLib.PPU
                         m_Cycles = 0;
 
                         m_FrameRender?.Invoke(m_Frame);
+
+                        m_Sprit0Hits = false;
                     }
                 }
             }
@@ -639,16 +645,19 @@ namespace NesLib.PPU
                 if (m_Cycles == 1)
                 {
                     ResetSecondaryOAM();
-                    CalculateSprite();
                 }
 
                 //每个cycle都需要先移位寄存器，再进行像素渲染
                 //然后做响应timing中的操作
                 ShiftRegisterLeftMove();
                 PaintOnePixel(m_Cycles - 1, m_Scanline);
-                PaintSprite(m_Cycles - 1, m_Scanline);
                 FetchData();
-                
+
+                if (m_Cycles == 65)
+                {
+                    CalculateSprite();
+                }
+
                 if (m_Cycles == 256)
                 {
                     IncY();
@@ -657,6 +666,7 @@ namespace NesLib.PPU
             else if (m_Cycles == 257)
             {
                 TxToVx();
+                FetchSprite();
             }
             else if (m_Cycles >= 258 && m_Cycles <= 320)
             {
@@ -712,10 +722,20 @@ namespace NesLib.PPU
             }
             else if (m_Cycles >= 1 && m_Cycles <= 256)
             {
+                if (m_Cycles == 1)
+                {
+                    ResetSecondaryOAM();
+                }
+
                 //每个cycle都需要先移位寄存器，再进行像素渲染
                 //然后做响应timing中的操作
                 ShiftRegisterLeftMove();
                 FetchData();
+
+                if (m_Cycles == 65)
+                {
+                    CalculateSprite();
+                }
 
                 if (m_Cycles == 256)
                 {
@@ -725,6 +745,7 @@ namespace NesLib.PPU
             else if (m_Cycles == 257)
             {
                 TxToVx();
+                FetchSprite();
             }
             else if (m_Cycles >= 258 && m_Cycles <= 320)
             {
@@ -881,7 +902,36 @@ namespace NesLib.PPU
             byte paletteBit1 = BitService.GetBit(ShiftRegister.TileHighByte, 15 - X);
             byte paletteBit0 = BitService.GetBit(ShiftRegister.TileLowByte, 15 - X);
             byte paletteIndex = (byte)((paletteBit3 << 3) | (paletteBit2 << 2) | (paletteBit1 << 1) | paletteBit0);
-            m_Frame[y][x] = GetBackgroundColor(paletteIndex);
+            int value = m_SpriteData[x];
+
+            if (value != 0)
+            {
+                //如果最后位为0,表示不可视
+                if ((value & 0x1) != 0)
+                {
+                    m_Frame[y][x] = value;
+                }
+                else
+                {
+                    m_Frame[y][x] = GetBackgroundColor(paletteIndex);
+                }
+
+                //如果倒数第二位为0，表示sprite 0
+                if (!m_Sprit0Hits && (value & 0x2) == 0)
+                {
+                    int transparentColor = Palette.GetRGBAColor(m_PPUBus.ReadByte(0x3F00));
+                    int background = GetBackgroundColor(paletteIndex);
+                    if (background != transparentColor && value != transparentColor)
+                    {
+                        STATUS.S = 1;
+                        m_Sprit0Hits = true;
+                    }
+                }
+            }
+            else
+            { 
+                m_Frame[y][x] = GetBackgroundColor(paletteIndex);
+            }
         }
 
         private void ResetSecondaryOAM()
@@ -950,6 +1000,85 @@ namespace NesLib.PPU
                     {
                         STATUS.O = 1;
                         break;
+                    }
+                }
+            }
+        }
+
+        private void FetchSprite()
+        {
+            int transparent = Palette.GetRGBAColor(m_PPUBus.ReadByte(0x3F00));
+
+            Array.Clear(m_SpriteData, 0, m_SpriteData.Length);
+            //8x8的
+            for (int i = m_SecondaryOAMCount - 1; i >= 0; --i)
+            {
+                byte oamIndex = m_SecondaryOAM[i];
+                int block = oamIndex * 4;
+                int y = OAM[block];
+                int x = OAM[block + 3];
+                int offset = 0;
+                if (CTRL.S == 1)
+                {
+                    offset = 0x1000;
+                }
+
+                offset += OAM[block + 1] * 16;
+
+                bool visible = BitService.GetBit(OAM[block + 2], 5) == 0;
+                byte horizentalFlip = BitService.GetBit(OAM[block + 2], 6);
+                byte verticalFlip = BitService.GetBit(OAM[block + 2], 7);
+                byte lowPatternData;
+                byte highPatternData;
+                if (verticalFlip == 1)
+                {
+                    lowPatternData = m_PPUBus.ReadByte((ushort)(offset + 7 - m_Scanline - y));
+                    highPatternData = m_PPUBus.ReadByte((ushort)(offset + 7 - m_Scanline - y + 8));
+                }
+                else
+                {
+                    lowPatternData = m_PPUBus.ReadByte((ushort)(offset + m_Scanline - y));
+                    highPatternData = m_PPUBus.ReadByte((ushort)(offset + m_Scanline - y + 8));
+                }
+                byte highPalette = (byte)((OAM[block + 2] & 0x3) << 2);
+
+                for (int j = 7; j >= 0; --j)
+                {
+                    int bit0, bit1;
+
+                    if (horizentalFlip == 1)
+                    {
+                        bit0 = BitService.GetBit(lowPatternData, 7 - j);
+                        bit1 = BitService.GetBit(highPatternData, 7 - j);
+                    }
+                    else
+                    {
+                        bit0 = BitService.GetBit(lowPatternData, j);
+                        bit1 = BitService.GetBit(highPatternData, j);
+                    }
+                    int paletteOffset = highPalette | (bit1 << 1) | bit0;
+                    int color = GetSpriteColor(paletteOffset);
+                    if (color != transparent)
+                    {
+                        if (visible)
+                        {
+                            m_SpriteData[x + 7 - j] = color;
+                        }
+                        else
+                        {
+                            unchecked 
+                            {
+                                m_SpriteData[x + 7 - j] = (int)(color & 0xFFFFFFFE); //末尾为0
+                            }
+                        }
+                    }
+
+                    if (oamIndex == 0)
+                    {
+                        unchecked
+                        { 
+                            m_SpriteData[x + 7 - j] &= (int)0xFFFFFFFD; //倒数第二位为1
+                        }
                     }
                 }
             }

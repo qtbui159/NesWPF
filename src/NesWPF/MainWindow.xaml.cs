@@ -55,7 +55,7 @@ namespace NesWPF
         private void Paint(int[][] rgba)
         {
             byte[] data = new byte[256 * 240 * 4];
-            
+
             int count = 0;
             for (int i = 0; i < rgba.Length; ++i)
             {

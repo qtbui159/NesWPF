@@ -162,7 +162,7 @@ namespace NesLib.CPU
         public void NMI()
         {
             const ushort NMI_ADDR = 0xFFFA;
-            
+
             Push((byte)((PC >> 8) & 0xFF));
             Push((byte)(PC & 0xFF));
             byte p = P.Value;
@@ -171,6 +171,8 @@ namespace NesLib.CPU
             P.InterruptDisable = 1;
 
             PC = ReadWord(NMI_ADDR);
+
+            Cycles += 7;
         }
 
         private StreamWriter sw;
@@ -184,6 +186,8 @@ namespace NesLib.CPU
             X = 0;
             Y = 0;
             P.SetValue(0x34);
+
+            Cycles += 7;
 
             sw = new StreamWriter(new FileStream("D:/1.txt", FileMode.Create), Encoding.UTF8);
         }
@@ -211,6 +215,17 @@ namespace NesLib.CPU
 
             Action<byte> impl = m_OPCodeMapImpl[opCode];
             impl.Invoke(opCode);
+        }
+
+        public void TickTockByCount(ref long count)
+        {
+            if (count <= 0)
+            {
+                return;
+            }
+            long old = Cycles;
+            TickTock();
+            count -= (Cycles - old);
         }
 
         public void TickTock(int scanlineCount)

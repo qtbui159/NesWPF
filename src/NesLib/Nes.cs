@@ -68,13 +68,25 @@ namespace NesLib
             m_CPU6502.RESET();
 
             fuck = paintCallback;
-
+            long count = 114;
+            int count2 = 0;
+            Action ppu = () =>
+              {
+                  m_PPU2C02.Ticktock();
+                  ++count2;
+                  if (count2 == 341)
+                  {
+                      count2 = 0;
+                      count = 114;
+                  }
+              };
             while (true)
             {
-                m_CPU6502.TickTock();
-                m_PPU2C02.Ticktock();
-                m_PPU2C02.Ticktock();
-                m_PPU2C02.Ticktock();
+                m_CPU6502.TickTockByCount(ref count);
+
+                ppu();
+                ppu();
+                ppu();
             }
         }
 

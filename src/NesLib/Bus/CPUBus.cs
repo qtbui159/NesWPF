@@ -83,7 +83,7 @@ namespace NesLib.Bus
                     }
                     else if (ioRealAddr == 0x2004)
                     {
-                        return m_PPU.OAM[m_PPU.OAMAddr++];
+                        return m_PPU.OAM[m_PPU.OAMAddr];
                     }
                     else if (ioRealAddr == 0x2005)
                     {
