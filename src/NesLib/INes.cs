@@ -1,4 +1,5 @@
-﻿using System;
+﻿using NesLib.Common;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -60,5 +61,13 @@ namespace NesLib
         /// </summary>
         /// <returns></returns>
         int[][] PaintFrame();
+
+        /// <summary>
+        /// 按键控制
+        /// </summary>
+        /// <param name="jb"></param>
+        /// <param name="pressDown"></param>
+        void P1JoystickKey(JoystickButton jb, bool pressDown);
+        void P2JoystickKey(JoystickButton jb, bool pressDown);
     }
 }

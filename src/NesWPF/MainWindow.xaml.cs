@@ -1,4 +1,5 @@
 ﻿using NesLib;
+using NesLib.Common;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -49,7 +50,6 @@ namespace NesWPF
             }).Start();
 
             img.Source = wb;
-            img1.Source = wb1;
         }
 
         private void Paint(int[][] rgba)
@@ -147,35 +147,19 @@ namespace NesWPF
         private void Button_MouseDown(object sender, MouseButtonEventArgs e)
         {
             Button btn = sender as Button;
-            if (btn.Name == "down")
-            {
-                nes.Right(true);
-            }
-            else if (btn.Name == "start")
-            {
-                nes.Start(true);
-            }
-            else if (btn.Name == "select")
-            {
-                nes.Select(true);
-            }
+            string s = btn.Name;
+            s = s.Substring(0, 1).ToUpper() + s.Substring(1);
+            JoystickButton jb = (JoystickButton)Enum.Parse(typeof(JoystickButton), s);
+            nes.P1JoystickKey(jb, true);
         }
 
         private void Button_MouseUp(object sender, MouseButtonEventArgs e)
         {
             Button btn = sender as Button;
-            if (btn.Name == "down")
-            {
-                nes.Right(false);
-            }
-            else if (btn.Name == "start")
-            {
-                nes.Start(false);
-            }
-            else if (btn.Name == "select")
-            {
-                nes.Select(false);
-            }
+            string s = btn.Name;
+            s = s.Substring(0, 1).ToUpper() + s.Substring(1);
+            JoystickButton jb = (JoystickButton)Enum.Parse(typeof(JoystickButton), s);
+            nes.P1JoystickKey(jb, false);
         }
 
         private void Button_Click4(object sender, RoutedEventArgs e)

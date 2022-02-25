@@ -1,5 +1,6 @@
 ﻿using NesLib.Bus;
 using NesLib.Cartridge;
+using NesLib.Common;
 using NesLib.CPU;
 using NesLib.JoyStick;
 using NesLib.Memory;
@@ -139,6 +140,78 @@ namespace NesLib
         public void Select(bool pressDown)
         {
             m_Joytick1.Select(pressDown);
+        }
+
+        public void P1JoystickKey(JoystickButton jb, bool pressDown)
+        {
+            if (jb is JoystickButton.A)
+            {
+                m_Joytick1.A(pressDown);
+            }
+            else if (jb is JoystickButton.B)
+            {
+                m_Joytick1.B(pressDown);
+            }
+            else if (jb is JoystickButton.Down)
+            {
+                m_Joytick1.Down(pressDown);
+            }
+            else if (jb is JoystickButton.Left)
+            {
+                m_Joytick1.Left(pressDown);
+            }
+            else if (jb is JoystickButton.Right)
+            {
+                m_Joytick1.Right(pressDown);
+            }
+            else if (jb is JoystickButton.Select)
+            {
+                m_Joytick1.Select(pressDown);
+            }
+            else if (jb is JoystickButton.Start)
+            {
+                m_Joytick1.Start(pressDown);
+            }
+            else if (jb is JoystickButton.Up)
+            {
+                m_Joytick1.Up(pressDown);
+            }
+        }
+
+        public void P2JoystickKey(JoystickButton jb, bool pressDown)
+        {
+            if (jb is JoystickButton.A)
+            {
+                m_Joytick2.A(pressDown);
+            }
+            else if (jb is JoystickButton.B)
+            {
+                m_Joytick2.B(pressDown);
+            }
+            else if (jb is JoystickButton.Down)
+            {
+                m_Joytick2.Down(pressDown);
+            }
+            else if (jb is JoystickButton.Left)
+            {
+                m_Joytick2.Left(pressDown);
+            }
+            else if (jb is JoystickButton.Right)
+            {
+                m_Joytick2.Right(pressDown);
+            }
+            else if (jb is JoystickButton.Select)
+            {
+                m_Joytick2.Select(pressDown);
+            }
+            else if (jb is JoystickButton.Start)
+            {
+                m_Joytick2.Start(pressDown);
+            }
+            else if (jb is JoystickButton.Up)
+            {
+                m_Joytick2.Up(pressDown);
+            }
         }
     }
 }
