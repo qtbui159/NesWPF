@@ -943,38 +943,6 @@ namespace NesLib.PPU
             m_SecondaryOAMCount = 0;
         }
 
-        private void PaintSprite(int x, int y)
-        {
-            int transparentColor = Palette.GetRGBAColor(m_PPUBus.ReadByte(0x3F00));
-            const int width = 8 - 1;
-            int height = CTRL.H == 1 ? 16 : 8;
-            for (int i = m_SecondaryOAMCount - 1; i >= 0; --i)
-            {
-                //按优先级来
-                int[][] sprite = GetSpriteTileColor(m_SecondaryOAM[i], out int sx, out int sy, out bool visible);
-                int realY = y - sy;
-                if (!(x >= sx && x <= sx + width))
-                {
-                    continue;
-                }
-
-                int color = sprite[realY][x - sx];
-                if (i == 0)
-                {
-                    //检测sprite 0 hit
-                    if (color != transparentColor || m_Frame[y][x] != transparentColor)
-                    {
-                        STATUS.S = 1;
-                    }
-                }
-
-                if (color != transparentColor && visible)
-                {
-                    m_Frame[y][x] = sprite[realY][x - sx];
-                }
-            }
-        }
-
         private void CalculateSprite()
         {
             if (MASK.s == 0)

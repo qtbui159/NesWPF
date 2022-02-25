@@ -16,20 +16,20 @@ namespace Utils
         /// <returns></returns>
         public static byte GetBit(byte b, int pos)
         {
-            if (pos < 0 || pos > 7)
-            {
-                throw new ArgumentOutOfRangeException(nameof(pos));
-            }
+            //if (pos < 0 || pos > 7)
+            //{
+            //    throw new ArgumentOutOfRangeException(nameof(pos));
+            //}
 
             return (byte)((b & (1 << pos)) != 0 ? 1 : 0);
         }
 
         public static byte GetBit(ushort b, int pos)
         {
-            if (pos < 0 || pos > 15)
-            {
-                throw new ArgumentOutOfRangeException(nameof(pos));
-            }
+            //if (pos < 0 || pos > 15)
+            //{
+            //    throw new ArgumentOutOfRangeException(nameof(pos));
+            //}
 
             return (byte)((b & (1 << pos)) != 0 ? 1 : 0);
         }

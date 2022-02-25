@@ -18,22 +18,22 @@ namespace NesLib.PPU
     /// </summary>
     class Palette : IPalette
     {
-        private static readonly Dictionary<int, int> m_OffsetMapRGBA;
+        private static readonly int[] m_OffsetMapRGBA;
         private readonly byte[] m_Data;
 
         static Palette()
         {
-            m_OffsetMapRGBA = new Dictionary<int, int>();
+            m_OffsetMapRGBA = new int[64];
             byte[] data = File.ReadAllBytes(@"C:\Users\Spike\Desktop\ntscpalette.pal");
             for (int i = 0; i < data.Length / 3; ++i)
             {
-                byte r = data[i*3];
-                byte g = data[i*3 + 1];
-                byte b = data[i*3 + 2];
+                byte r = data[i * 3];
+                byte g = data[i * 3 + 1];
+                byte b = data[i * 3 + 2];
                 byte a = 0xFF;
 
                 int value = (r << 24) | (g << 16) | (b << 8) | a;
-                m_OffsetMapRGBA.Add(i, value);
+                m_OffsetMapRGBA[i] = value;
             }
         }
 
