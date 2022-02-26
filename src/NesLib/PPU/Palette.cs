@@ -57,22 +57,9 @@ namespace NesLib.PPU
         {
             //需要特别注意的是调色板写时地址和读时地址需要分别处理
             addr = GetWriteRealAddr(addr);
-
-            if (addr == 0x0000 || addr == 0x0004 || addr == 0x0008 || addr == 0x000C)
-            {
-                m_Data[addr] = data;
-                m_Data[addr + 0x10] = data;
-            }
-            else if (addr == 0x0010 || addr == 0x0014 || addr == 0x0018 || addr == 0x001C)
-            {
-                m_Data[addr] = data;
-                m_Data[addr - 0x10] = data;
-            }
-            else
-            {
-                m_Data[addr] = data;
-            }
+            m_Data[addr] = data;
         }
+
         private ushort GetReadRealAddr(ushort addr)
         {
             addr = (ushort)(addr & 0x3F1F);
@@ -81,7 +68,7 @@ namespace NesLib.PPU
             {
                 addr -= 0x10;
             }
-            if (addr == 0x3F00 || addr == 0x3F04 || addr == 0x3F08 || addr == 0x3F0C)
+            if (addr == 0x3F04 || addr == 0x3F08 || addr == 0x3F0C)
             {
                 addr = 0x3F00;
             }

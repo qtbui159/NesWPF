@@ -77,7 +77,7 @@ namespace NesLib
             m_Render = paintCallback;
             while (true)
             {
-                m_CPU6502.TickTockByCount();
+                m_CPU6502.TickTockFlatCycle();
 
                 m_PPU2C02.Ticktock();
                 m_PPU2C02.Ticktock();

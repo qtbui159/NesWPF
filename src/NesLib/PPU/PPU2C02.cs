@@ -612,7 +612,7 @@ namespace NesLib.PPU
 
         private void HandleVisibleScanLine()
         {
-            if (MASK.m == 0 || MASK.s == 0)
+            if (MASK.b == 0 && MASK.s == 0)
             {
                 return;
             }
@@ -690,7 +690,7 @@ namespace NesLib.PPU
 
         private void HandlePreRenderLine()
         {
-            if (MASK.m == 0 || MASK.s == 0)
+            if (MASK.b == 0 && MASK.s == 0)
             {
                 return;
             }
@@ -760,7 +760,7 @@ namespace NesLib.PPU
 
         private void ShiftRegisterLeftMove()
         {
-            if (MASK.m == 0)
+            if (MASK.b == 0)
             {
                 return;
             }
@@ -774,6 +774,11 @@ namespace NesLib.PPU
 
         private void LatchToRegister()
         {
+            if (MASK.b == 0)
+            {
+                return;
+            }
+
             ShiftRegister.TileHighByte |= Latch.BackgroundTileHighByte;
             ShiftRegister.TileLowByte |= Latch.BackgroundTileLowByte;
 
@@ -789,7 +794,7 @@ namespace NesLib.PPU
 
         private void FetchData()
         {
-            if (MASK.m == 0)
+            if (MASK.b == 0)
             {
                 return;
             }
@@ -944,6 +949,10 @@ namespace NesLib.PPU
 
         private void ResetSecondaryOAM()
         {
+            if (MASK.s == 0)
+            {
+                return;
+            }
             for (int i = 0; i < m_SecondaryOAM.Length; ++i)
             {
                 m_SecondaryOAM[i] = 0xFF;
@@ -983,6 +992,11 @@ namespace NesLib.PPU
 
         private void FetchSprite()
         {
+            if (MASK.s == 0)
+            {
+                return;
+            }
+
             Array.Clear(m_SpriteData, 0, m_SpriteData.Length);
             //暂时只适配了8x8的
             for (int i = m_SecondaryOAMCount - 1; i >= 0; --i)

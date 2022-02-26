@@ -234,7 +234,7 @@ namespace NesLib.CPU
             impl.Invoke(opCode);
         }
 
-        public void TickTockByCount()
+        public void TickTockFlatCycle()
         {
             if (m_DMADelay > 0)
             {

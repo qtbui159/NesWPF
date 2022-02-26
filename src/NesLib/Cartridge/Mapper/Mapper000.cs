@@ -30,6 +30,10 @@ namespace NesLib.Cartridge.Mapper
 
         public byte ReadByte(ushort addr)
         {
+            if (addr < 0x2000)
+            {
+                return m_CHRRom[addr];
+            }
             if (addr >= 0x6000 && addr <= 0x7FFF)
             {
                 addr = GetPRGRamRealAddr(addr);
@@ -49,8 +53,7 @@ namespace NesLib.Cartridge.Mapper
         public void WriteByte(ushort addr, byte data)
         {
             //目前暂不支持写ram
-            //rom不可写
-            throw new NotSupportedException();
+            //rom不可写，所以啥都不用管
         }
 
         private ushort GetPRGRomRealAddr(ushort addr)

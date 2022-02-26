@@ -36,7 +36,7 @@ namespace NesLib.Bus
             if (readlAddr < 0x2000)
             {
                 //这里实现暂时有问题，应该用Mapper去读取，因为可能包含镜像
-                return m_Cartridge.CHRRom[readlAddr];
+                return m_Cartridge.Mapper.ReadByte(readlAddr);
             }
             else if (readlAddr >= 0x2000 && readlAddr < 0x3F00)
             {
@@ -58,7 +58,7 @@ namespace NesLib.Bus
 
             if (readAddr < 0x2000)
             {
-                throw new Exception("该地址不支持写入操作");
+                m_Cartridge.Mapper.WriteByte(addr, data);
             }
             else if (readAddr >= 0x2000 && readAddr < 0x3F00)
             {
