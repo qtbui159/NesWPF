@@ -26,7 +26,7 @@ namespace NesLib.PPU
         /// <summary>
         /// Fine X scroll (3 bits)
         /// </summary>
-        byte X { get; set; }
+        byte FineXScroll { get; set; }
 
         /// <summary>
         /// 显存地址
@@ -61,46 +61,6 @@ namespace NesLib.PPU
         /// </summary>
         /// <param name="mirroringMode"></param>
         void SwitchNameTableMirroring(MirroringMode mirroringMode);
-
-        /// <summary>
-        /// 获取背景色
-        /// </summary>
-        /// <param name="x"></param>
-        /// <param name="y"></param>
-        /// <returns></returns>
-        int GetBackgroundPixel(int x, int y);
-
-        /// <summary>
-        /// 获取背景tile，每个tile 8*8像素,共32*30
-        /// </summary>
-        /// <param name="tx"></param>
-        /// <param name="ty"></param>
-        /// <returns></returns>
-        int[][] GetBackgroundTileColor(int tx, int ty);
-
-        /// <summary>
-        /// 获取精灵tile
-        /// </summary>
-        /// <returns></returns>
-        int[][] GetSpriteTileColor(int count, out int x, out int y);
-
-        /// <summary>
-        /// 画一帧
-        /// </summary>
-        /// <returns></returns>
-        int[][] PaintFrame();
-
-        /// <summary>
-        /// 画一条可视扫描线
-        /// </summary>
-        /// <param name="y">0-239</param>
-        /// <returns></returns>
-        int[] PaintScanLine(int y, ref bool spriteHit);
-
-        void PreRenderLine();
-
-        void PaintSprite(int[][] background);
-
         void Ticktock();
     }
 }

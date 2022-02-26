@@ -20,12 +20,12 @@ namespace NesLib.PPU
     {
         private static readonly int[] m_OffsetMapRGBA;
         private readonly byte[] m_Data;
-        private readonly IPPU2C02 m_PPU;
+        private readonly Action<byte> m_PPUReaderBufferUpdate;
 
         static Palette()
         {
             m_OffsetMapRGBA = new int[64];
-            byte[] data = File.ReadAllBytes(@"C:\Users\Spike\Desktop\ntscpalette.pal");
+            byte[] data = File.ReadAllBytes(@".\ntscpalette.pal");
             for (int i = 0; i < data.Length / 3; ++i)
             {
                 byte r = data[i * 3];
@@ -38,18 +38,19 @@ namespace NesLib.PPU
             }
         }
 
-        public Palette(IPPU2C02 pPU2C02)
+        public Palette(Action<byte> ppuReaderBufferUpdateAction)
         {
             m_Data = new byte[0x20];
-            m_PPU = pPU2C02;
+            m_PPUReaderBufferUpdate = ppuReaderBufferUpdateAction;
         }
 
         public byte ReadByte(ushort addr)
         {
             //需要特别注意的是调色板写时地址和读时地址需要分别处理
             addr = GetReadRealAddr(addr);
-            m_PPU.ReadBuffer = m_Data[addr];
-            return m_PPU.ReadBuffer;
+            byte data = m_Data[addr];
+            m_PPUReaderBufferUpdate?.Invoke(data);
+            return data;
         }
 
         public void WriteByte(ushort addr, byte data)

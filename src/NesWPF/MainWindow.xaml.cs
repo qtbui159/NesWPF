@@ -24,25 +24,42 @@ namespace NesWPF
     /// </summary>
     public partial class MainWindow : Window
     {
-        INes nes = NesFactory.New();
-
-        WriteableBitmap wb = new WriteableBitmap(256, 240, 72, 72, PixelFormats.Pbgra32, null);
-        WriteableBitmap wb1 = new WriteableBitmap(256, 240, 72, 72, PixelFormats.Pbgra32, null);
+        private INes nes = NesFactory.New();
+        private WriteableBitmap wb = new WriteableBitmap(256, 240, 72, 72, PixelFormats.Pbgra32, null);
 
         public MainWindow()
         {
             InitializeComponent();
-        }
 
-        private void M_Timer_Tick(object sender, EventArgs e)
-        {
-            Button_Click2(null, null);
+#if DEBUG
+            tips.Text = "请在Release编译下运行";
+#endif
         }
 
         private async void Button_Click(object sender, RoutedEventArgs e)
         {
-            //await nes.InsertCartidgeAsync(@"C:\Users\Spike\Desktop\nestest.nes");
-            await nes.InsertCartidgeAsync(@"C:\Users\Spike\Desktop\896.nes");
+            testBtn.IsEnabled = false;
+            marioBtn.IsEnabled = false;
+
+            await nes.InsertCartidgeAsync(@".\mario.nes");
+
+            new Thread(() =>
+            {
+                nes.PowerUp(Paint);
+            })
+            {
+                IsBackground = true,
+            }.Start();
+
+            img.Source = wb;
+        }
+
+        private async void Button1_Click(object sender, RoutedEventArgs e)
+        {
+            testBtn.IsEnabled = false;
+            marioBtn.IsEnabled = false;
+
+            await nes.InsertCartidgeAsync(@".\nestest.nes");
 
             new Thread(() =>
             {
@@ -82,49 +99,6 @@ namespace NesWPF
             });
         }
 
-        private void Button_Click2(object sender, RoutedEventArgs e)
-        {
-            //wb.Lock();
-            //for (int y = 0; y < 240; ++y)
-            //{
-            //    for (int x = 0; x < 256; ++x)
-            //    {
-            //        int rgba = nes.GetBackgroundColor(x, y);
-            //        byte r = (byte)(rgba >> 24);
-            //        byte g = (byte)(rgba >> 16);
-            //        g &= 0xFF;
-            //        byte b = (byte)(rgba >> 8);
-            //        b &= 0xFF;
-            //        wb.SetPixel(x, y, Color.FromArgb(0xff,r, g, b));
-            //    }
-            //}
-
-            //wb.Unlock();
-            byte[] data = new byte[256 * 240 * 4];
-            wb.Lock();
-            int[][] rgba = nes.PaintFrame();
-            int count = 0;
-            for (int i = 0; i < rgba.Length; ++i)
-            {
-                for (int j = 0; j < rgba[i].Length; ++j)
-                {
-                    byte r = (byte)(rgba[i][j] >> 24);
-                    byte g = (byte)(rgba[i][j] >> 16);
-                    g &= 0xFF;
-                    byte b = (byte)(rgba[i][j] >> 8);
-                    b &= 0xFF;
-                    byte a = (byte)(rgba[i][j] & 0xFF);
-                    data[count++] = b;
-                    data[count++] = g;
-                    data[count++] = r;
-                    data[count++] = a;
-                }
-            }
-            wb.WritePixels(new Int32Rect(0 * 8, 0 * 8, 256, 240), data, 256 * 4, 0);
-
-            wb.Unlock();
-        }
-
         private void Button_Click3(object sender, RoutedEventArgs e)
         {
             int[] s = nes.GetPalette();
@@ -160,41 +134,6 @@ namespace NesWPF
             s = s.Substring(0, 1).ToUpper() + s.Substring(1);
             JoystickButton jb = (JoystickButton)Enum.Parse(typeof(JoystickButton), s);
             nes.P1JoystickKey(jb, false);
-        }
-
-        private void Button_Click4(object sender, RoutedEventArgs e)
-        {
-            
-            wb1.Lock();
-            for (int block = 63; block >= 0; --block)
-            {
-                int[][] rgba = nes.GetSpriteTileColor(block, out int x, out int y);
-                if (y >= 0xEF || x >= 0xF9)
-                {
-                    continue;
-                }
-                byte[] data = new byte[8 * 8 * 4];
-                int count = 0;
-
-                for (int i = 0; i < rgba.Length; ++i)
-                {
-                    for (int j = 0; j < rgba[i].Length; ++j)
-                    {
-                        byte r = (byte)(rgba[i][j] >> 24);
-                        byte g = (byte)(rgba[i][j] >> 16);
-                        g &= 0xFF;
-                        byte b = (byte)(rgba[i][j] >> 8);
-                        b &= 0xFF;
-                        byte a = (byte)(rgba[i][j] & 0xFF);
-                        data[count++] = b;
-                        data[count++] = g;
-                        data[count++] = r;
-                        data[count++] = a;
-                    }
-                }
-                wb1.WritePixels(new Int32Rect(x, y, 8, 8), data, 8 * 4, 0);
-            }
-            wb1.Unlock();
         }
 
         private void Window_KeyDown(object sender, KeyEventArgs e)

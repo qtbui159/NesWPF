@@ -161,6 +161,22 @@ namespace NesLib.CPU
         public void IRQ()
         {
             const ushort IRQ_ADDR = 0xFFFE;
+
+            if (P.InterruptDisable == 1)
+            {
+                return;
+            }
+
+            Push((byte)((PC >> 8) & 0xFF));
+            Push((byte)(PC & 0xFF));
+            byte p = P.Value;
+            p = BitService.SetBit(p, 5);
+            Push(p);
+            P.InterruptDisable = 1;
+
+            PC = ReadWord(IRQ_ADDR);
+
+            Cycles += 7;
         }
 
         public void NMI()
@@ -179,19 +195,18 @@ namespace NesLib.CPU
             Cycles += 7;
         }
 
-        private StreamWriter sw;
+        //private StreamWriter sw;
         public void RESET()
         {
             const ushort RESET_ADDR = 0xFFFC;
             PC = ReadWord(RESET_ADDR);
-            //PC = 0xC000;
             SP = 0xFD;
             A = 0;
             X = 0;
             Y = 0;
             P.SetValue(0x34);
 
-            sw = new StreamWriter(new FileStream("D:/1.txt", FileMode.Create), Encoding.UTF8);
+            //sw = new StreamWriter(new FileStream("D:/1.txt", FileMode.Create), Encoding.UTF8);
         }
 
         public void TickTock()
@@ -211,7 +226,7 @@ namespace NesLib.CPU
             byte opCode = m_CPUBus.ReadByte(PC++);
             if (!m_OPCodeMapImpl.ContainsKey(opCode))
             {
-                sw.Close();
+                //sw.Close();
                 throw new Exception($"不支持的opCode,{opCode:X2}");
             }
 

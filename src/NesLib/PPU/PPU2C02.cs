@@ -24,8 +24,6 @@ namespace NesLib.PPU
 {
     class PPU2C02 : IPPU2C02
     {
-        private const int SCAN_LINE_COLUMN = 341;
-
         private readonly IPPUBus m_PPUBus;
 
         private MirroringMode m_MirroringMode;
@@ -35,7 +33,7 @@ namespace NesLib.PPU
         public STATUSRegister STATUS { get; private set; }
         public VRAMAddrRegister T { get; set; }
         public VRAMAddrRegister Addr { get; set; }
-        public byte X { get; set; }
+        public byte FineXScroll { get; set; }
 
         /// <summary>
         /// 这里只实现了一级OAM，实际PPU中还有一个二级OAM，和sprite overflow bug息息相关
@@ -547,42 +545,6 @@ namespace NesLib.PPU
 
             return rgba.ToArray();
         }
-        public void PaintSprite(int[][] background)
-        {
-            if (MASK.s == 0)
-            {
-                return;
-            }
-            int bbb = Palette.GetRGBAColor(m_PPUBus.ReadByte(0x3F00));
-
-            for (int i = 63; i >= 0; --i)
-            {
-                int[][] sprite = GetSpriteTileColor(i, out int x, out int y, out bool visible);
-                if (!visible)
-                {
-                    continue;
-                }
-                if (y >= 240 - 7 || x >= 256 - 7)
-                {
-                    continue;
-                }
-                if (MASK.M == 0 && x == 0)
-                {
-                    continue;
-                }
-
-                for (int py = 0; py < 8; ++py)
-                {
-                    for (int px = 0; px < 8; ++px)
-                    {
-                        if (sprite[py][px] != bbb)
-                        {
-                            background[y + py][x + px] = sprite[py][px];
-                        }
-                    }
-                }
-            }
-        }
 
         public void Ticktock()
         {
@@ -636,7 +598,13 @@ namespace NesLib.PPU
 
                         m_FrameRender?.Invoke(frame);
 
+                        m_EvenFrame = !m_EvenFrame;
                         m_Sprit0Hits = false;
+
+                        if (!m_EvenFrame)
+                        {
+                            ++m_Cycles;
+                        }
                     }
                 }
             }
@@ -909,10 +877,10 @@ namespace NesLib.PPU
         /// <param name="y">0-240像素</param>
         private void PaintOnePixel(int x, int y)
         {
-            byte paletteBit3 = BitService.GetBit(ShiftRegister.AttributeHighByte, 15 - X);
-            byte paletteBit2 = BitService.GetBit(ShiftRegister.AttributeLowByte, 15 - X);
-            byte paletteBit1 = BitService.GetBit(ShiftRegister.TileHighByte, 15 - X);
-            byte paletteBit0 = BitService.GetBit(ShiftRegister.TileLowByte, 15 - X);
+            byte paletteBit3 = BitService.GetBit(ShiftRegister.AttributeHighByte, 15 - FineXScroll);
+            byte paletteBit2 = BitService.GetBit(ShiftRegister.AttributeLowByte, 15 - FineXScroll);
+            byte paletteBit1 = BitService.GetBit(ShiftRegister.TileHighByte, 15 - FineXScroll);
+            byte paletteBit0 = BitService.GetBit(ShiftRegister.TileLowByte, 15 - FineXScroll);
             byte paletteIndex = (byte)((paletteBit3 << 3) | (paletteBit2 << 2) | (paletteBit1 << 1) | paletteBit0);
             byte value = m_SpriteData[x];
             byte realValue = (byte)(value & 0x3F);
@@ -957,32 +925,7 @@ namespace NesLib.PPU
                             m_Frame[y][x] = GetBackgroundColor(backgroundColor);
                         }
                     }
-                    //}
-
-                    ////如果最后位为0,表示不可视
-                    //if ((value & 0x1) != 0)
-                    //{
-                    //    m_Frame[y][x] = value;
-                    //}
-                    //else
-                    //{
-                    //    m_Frame[y][x] = GetBackgroundColor(paletteIndex);
-                    //}
-
-
                 }
-
-                //如果倒数第二位为0，表示sprite 0
-                //if (!m_Sprit0Hits && (value & 0x2) == 0)
-                //{
-                //    int transparentColor = Palette.GetRGBAColor(m_PPUBus.ReadByte(0x3F00));
-                //    int background = GetBackgroundColor(paletteIndex);
-                //    if (background != transparentColor && value != transparentColor)
-                //    {
-                //        STATUS.S = 1;
-                //        m_Sprit0Hits = true;
-                //    }
-                //}
                 bool isSprite0 = BitService.GetBit(value, 6) == 1;
                 if (!m_Sprit0Hits && isSprite0)
                 {
@@ -1041,7 +984,7 @@ namespace NesLib.PPU
         private void FetchSprite()
         {
             Array.Clear(m_SpriteData, 0, m_SpriteData.Length);
-            //8x8的
+            //暂时只适配了8x8的
             for (int i = m_SecondaryOAMCount - 1; i >= 0; --i)
             {
                 byte oamIndex = m_SecondaryOAM[i];
@@ -1091,7 +1034,6 @@ namespace NesLib.PPU
                         bit1 = BitService.GetBit(highPatternData, j);
                     }
                     int paletteOffset = highPalette | (bit1 << 1) | bit0;
-                    //byte color = GetSpriteColor(paletteOffset);
                     byte color = (byte)paletteOffset;
                     if (color != 0)
                     {
@@ -1109,30 +1051,6 @@ namespace NesLib.PPU
                     {
                         m_SpriteData[x + 7 - j] |= 0x40; //倒数第2位置1，paint的时候才知道是sprint 0
                     }
-
-
-                    //if (color != transparent)
-                    //{
-                    //    if (front)
-                    //    {
-                    //        m_SpriteData[x + 7 - j] = color;
-                    //    }
-                    //    else
-                    //    {
-                    //        unchecked 
-                    //        {
-                    //            m_SpriteData[x + 7 - j] = (int)(color & 0xFFFFFFFE); //末尾为0
-                    //        }
-                    //    }
-                    //}
-
-                    //if (oamIndex == 0)
-                    //{
-                    //    unchecked
-                    //    { 
-                    //        m_SpriteData[x + 7 - j] &= (int)0xFFFFFFFD; //倒数第二位为1
-                    //    }
-                    //}
                 }
             }
         }

@@ -204,7 +204,7 @@ namespace NesLib.Bus
                             m_PPU.T.UpdateBit(BitService.GetBit(data, 6), 3);
                             m_PPU.T.UpdateBit(BitService.GetBit(data, 7), 4);
 
-                            m_PPU.X = (byte)(data & 0x7);
+                            m_PPU.FineXScroll = (byte)(data & 0x7);
                         }
 
                         m_PPU.WriteX2Flag = !m_PPU.WriteX2Flag;

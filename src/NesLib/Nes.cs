@@ -33,7 +33,7 @@ namespace NesLib
         private readonly IJoyStick m_Joytick2;
         private ICartridge m_Cartridge;
 
-        private Action<int[][]> fuck;
+        private Action<int[][]> m_Render;
 
         public Nes()
         {
@@ -41,9 +41,15 @@ namespace NesLib
             m_CPU6502 = new CPU6502(m_CPUBus);
             m_RAM = new RAM();
             m_PPUBus = new PPUBus();
-            m_PPU2C02 = new PPU2C02(m_PPUBus, () => m_CPU6502.NMI(), x => fuck(x));
+            m_PPU2C02 = new PPU2C02(m_PPUBus, () => m_CPU6502.NMI(), x => 
+            {
+                m_Render(x);
+#if !DEBUG
+                Thread.Sleep(4);
+#endif
+            });
             m_VRAM = new VRAM();
-            m_Palette = new Palette(m_PPU2C02);
+            m_Palette = new Palette(data => m_PPU2C02.ReadBuffer = data);
             m_Joytick1 = new JoyStick.JoyStick();
             m_Joytick2 = new JoyStick.JoyStick();
         }
@@ -68,7 +74,7 @@ namespace NesLib
 
             m_CPU6502.RESET();
 
-            fuck = paintCallback;
+            m_Render = paintCallback;
             while (true)
             {
                 m_CPU6502.TickTockByCount();
@@ -77,11 +83,6 @@ namespace NesLib
                 m_PPU2C02.Ticktock();
                 m_PPU2C02.Ticktock();
             }
-        }
-
-        public int GetBackgroundColor(int x, int y)
-        {
-            return m_PPU2C02.GetBackgroundPixel(x, y);
         }
 
         public int[] GetPalette()
@@ -93,41 +94,6 @@ namespace NesLib
                 r.Add(Palette.GetRGBAColor(offset));
             }
             return r.ToArray();
-        }
-
-        public int[][] GetBackgroundTileColor(int tx, int ty)
-        {
-            return m_PPU2C02.GetBackgroundTileColor(tx, ty);
-        }
-
-        public int[][] GetSpriteTileColor(int count, out int x, out int y)
-        {
-            return m_PPU2C02.GetSpriteTileColor(count, out x, out y);
-        }
-
-        public int[][] PaintFrame()
-        {
-            return m_PPU2C02.PaintFrame();
-        }
-
-        public void Right(bool pressDown)
-        {
-            m_Joytick1.Right(pressDown);
-        }
-
-        public void Down(bool pressDown)
-        {
-            m_Joytick1.Down(pressDown);
-        }
-
-        public void Start(bool pressDown)
-        {
-            m_Joytick1.Start(pressDown);
-        }
-
-        public void Select(bool pressDown)
-        {
-            m_Joytick1.Select(pressDown);
         }
 
         public void P1JoystickKey(JoystickButton jb, bool pressDown)
