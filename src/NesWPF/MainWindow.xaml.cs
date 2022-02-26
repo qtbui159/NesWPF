@@ -196,5 +196,61 @@ namespace NesWPF
             }
             wb1.Unlock();
         }
+
+        private void Window_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.W)
+            {
+                nes.P1JoystickKey(JoystickButton.Up, true);
+            }
+            else if (e.Key == Key.S)
+            {
+                nes.P1JoystickKey(JoystickButton.Down, true);
+            }
+            else if (e.Key == Key.A)
+            {
+                nes.P1JoystickKey(JoystickButton.Left, true);
+            }
+            else if (e.Key == Key.D)
+            {
+                nes.P1JoystickKey(JoystickButton.Right, true);
+            }
+            else if (e.Key == Key.J)
+            {
+                nes.P1JoystickKey(JoystickButton.A, true);
+            }
+            else if (e.Key == Key.K)
+            {
+                nes.P1JoystickKey(JoystickButton.B, true);
+            }
+        }
+
+        private void Window_KeyUp(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.W)
+            {
+                nes.P1JoystickKey(JoystickButton.Up, false);
+            }
+            else if (e.Key == Key.S)
+            {
+                nes.P1JoystickKey(JoystickButton.Down, false);
+            }
+            else if (e.Key == Key.A)
+            {
+                nes.P1JoystickKey(JoystickButton.Left, false);
+            }
+            else if (e.Key == Key.D)
+            {
+                nes.P1JoystickKey(JoystickButton.Right, false);
+            }
+            else if (e.Key == Key.J)
+            {
+                nes.P1JoystickKey(JoystickButton.A, false);
+            }
+            else if (e.Key == Key.K)
+            {
+                nes.P1JoystickKey(JoystickButton.B, false);
+            }
+        }
     }
 }

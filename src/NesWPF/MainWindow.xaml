@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:NesWPF"
         mc:Ignorable="d"
-        Title="MainWindow" Height="1000" Width="1500">
+        Title="MainWindow" Height="1000" Width="1500" KeyDown="Window_KeyDown" KeyUp="Window_KeyUp">
     <Grid>
         <Viewbox Width="512" Height="480" Stretch="Fill" HorizontalAlignment="Left" Margin="0,186,0,319">
             <Image Width="256" Height="240" x:Name="img"></Image>
