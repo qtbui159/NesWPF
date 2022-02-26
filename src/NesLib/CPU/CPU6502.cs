@@ -48,6 +48,8 @@ namespace NesLib.CPU
         /// </summary>
         public ProcessorStatusRegister P { get; private set; }
 
+        private long m_DMADelay = 0;
+
         public CPU6502(ICPUBus cpuBus)
         {
             m_CPUBus = cpuBus;
@@ -60,12 +62,14 @@ namespace NesLib.CPU
 
         private void DMACycle()
         {
+            long old = Cycles;
             if (Cycles % 2 == 0)
             {
                 Cycles++;
             }
 
             Cycles += 513;
+            m_DMADelay += Cycles - old;
         }
 
         /// <summary>
@@ -187,8 +191,6 @@ namespace NesLib.CPU
             Y = 0;
             P.SetValue(0x34);
 
-            Cycles += 7;
-
             sw = new StreamWriter(new FileStream("D:/1.txt", FileMode.Create), Encoding.UTF8);
         }
 
@@ -217,15 +219,19 @@ namespace NesLib.CPU
             impl.Invoke(opCode);
         }
 
-        public void TickTockByCount(ref long count)
+        public void TickTockByCount()
         {
-            if (count <= 0)
+            if (m_DMADelay > 0)
             {
+                --m_DMADelay;
                 return;
             }
-            long old = Cycles;
-            TickTock();
-            count -= (Cycles - old);
+
+            if (Cycles == 0)
+            {
+                TickTock();
+            }
+            --Cycles;
         }
 
         public void TickTock(int scanlineCount)

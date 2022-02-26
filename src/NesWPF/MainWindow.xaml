@@ -7,7 +7,7 @@
         mc:Ignorable="d"
         Title="MainWindow" Height="1000" Width="1500">
     <Grid>
-        <Viewbox Width="256" Height="240" Stretch="Fill" HorizontalAlignment="Left">
+        <Viewbox Width="512" Height="480" Stretch="Fill" HorizontalAlignment="Left" Margin="0,186,0,319">
             <Image Width="256" Height="240" x:Name="img"></Image>
         </Viewbox>
         <UniformGrid Height="100" VerticalAlignment="Top" Columns="16" Rows="2">

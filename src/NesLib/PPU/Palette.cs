@@ -20,6 +20,7 @@ namespace NesLib.PPU
     {
         private static readonly int[] m_OffsetMapRGBA;
         private readonly byte[] m_Data;
+        private readonly IPPU2C02 m_PPU;
 
         static Palette()
         {
@@ -37,25 +38,40 @@ namespace NesLib.PPU
             }
         }
 
-        public Palette()
+        public Palette(IPPU2C02 pPU2C02)
         {
             m_Data = new byte[0x20];
+            m_PPU = pPU2C02;
         }
 
         public byte ReadByte(ushort addr)
         {
             //需要特别注意的是调色板写时地址和读时地址需要分别处理
             addr = GetReadRealAddr(addr);
-            return m_Data[addr];
+            m_PPU.ReadBuffer = m_Data[addr];
+            return m_PPU.ReadBuffer;
         }
 
         public void WriteByte(ushort addr, byte data)
         {
             //需要特别注意的是调色板写时地址和读时地址需要分别处理
             addr = GetWriteRealAddr(addr);
-            m_Data[addr] = data;
-        }
 
+            if (addr == 0x0000 || addr == 0x0004 || addr == 0x0008 || addr == 0x000C)
+            {
+                m_Data[addr] = data;
+                m_Data[addr + 0x10] = data;
+            }
+            else if (addr == 0x0010 || addr == 0x0014 || addr == 0x0018 || addr == 0x001C)
+            {
+                m_Data[addr] = data;
+                m_Data[addr - 0x10] = data;
+            }
+            else
+            {
+                m_Data[addr] = data;
+            }
+        }
         private ushort GetReadRealAddr(ushort addr)
         {
             addr = (ushort)(addr & 0x3F1F);
@@ -64,7 +80,7 @@ namespace NesLib.PPU
             {
                 addr -= 0x10;
             }
-            if (addr == 0x3F04 || addr == 0x3F08 || addr == 0x3F0C)
+            if (addr == 0x3F00 || addr == 0x3F04 || addr == 0x3F08 || addr == 0x3F0C)
             {
                 addr = 0x3F00;
             }

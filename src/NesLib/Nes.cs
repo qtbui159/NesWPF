@@ -43,7 +43,7 @@ namespace NesLib
             m_PPUBus = new PPUBus();
             m_PPU2C02 = new PPU2C02(m_PPUBus, () => m_CPU6502.NMI(), x => fuck(x));
             m_VRAM = new VRAM();
-            m_Palette = new Palette();
+            m_Palette = new Palette(m_PPU2C02);
             m_Joytick1 = new JoyStick.JoyStick();
             m_Joytick2 = new JoyStick.JoyStick();
         }
@@ -69,25 +69,13 @@ namespace NesLib
             m_CPU6502.RESET();
 
             fuck = paintCallback;
-            long count = 114;
-            int count2 = 0;
-            Action ppu = () =>
-              {
-                  m_PPU2C02.Ticktock();
-                  ++count2;
-                  if (count2 == 341)
-                  {
-                      count2 = 0;
-                      count = 114;
-                  }
-              };
             while (true)
             {
-                m_CPU6502.TickTockByCount(ref count);
+                m_CPU6502.TickTockByCount();
 
-                ppu();
-                ppu();
-                ppu();
+                m_PPU2C02.Ticktock();
+                m_PPU2C02.Ticktock();
+                m_PPU2C02.Ticktock();
             }
         }
 

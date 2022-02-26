@@ -14,7 +14,7 @@ namespace NesLib.CPU
         /// 执行一条指令
         /// </summary>
         void TickTock();
-        void TickTockByCount(ref long count);
+        void TickTockByCount();
 
         /// <summary>
         /// 执行n条扫描线的指令周期，1条扫描线为113.6667指令周期

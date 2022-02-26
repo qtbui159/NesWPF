@@ -57,8 +57,8 @@ namespace NesLib.PPU
         private Action m_NMI;
         private Action<int[][]> m_FrameRender;
         private bool m_EvenFrame;
-        int[][] m_Frame;
-        int[] m_SpriteData;
+        byte[][] m_Frame;
+        byte[] m_SpriteData;
         bool m_Sprit0Hits = false;
 
         public PPU2C02(IPPUBus ppuBus, Action nmiInterrupt, Action<int[][]> frameRender)
@@ -83,12 +83,12 @@ namespace NesLib.PPU
             m_NMI = nmiInterrupt;
             m_FrameRender = frameRender;
             m_EvenFrame = true;
-            m_Frame = new int[240][];
+            m_Frame = new byte[240][];
             for (int i = 0; i < m_Frame.Length; i++)
             {
-                m_Frame[i] = new int[256];
+                m_Frame[i] = new byte[256];
             }
-            m_SpriteData = new int[256 * 2]; //弄大一点，避免越界
+            m_SpriteData = new byte[256 * 2]; //弄大一点，避免越界
             m_Sprit0Hits = false;
         }
 
@@ -623,7 +623,18 @@ namespace NesLib.PPU
                         m_Scanline = 0;
                         m_Cycles = 0;
 
-                        m_FrameRender?.Invoke(m_Frame);
+                        int[][] frame = new int[240][];
+                        for (int y = 0; y < frame.Length; ++y)
+                        {
+                            frame[y] = new int[256];
+                            for (int x = 0; x < 256; ++x)
+                            {
+                                int rgba = Palette.GetRGBAColor(m_Frame[y][x]);
+                                frame[y][x] = rgba;
+                            }
+                        }
+
+                        m_FrameRender?.Invoke(frame);
 
                         m_Sprit0Hits = false;
                     }
@@ -696,11 +707,14 @@ namespace NesLib.PPU
 
         private void HandleVBlank()
         {
-            if (m_Scanline == 241 && m_Cycles == 1)
+            if (m_Scanline == 241)
             {
-                STATUS.V = 1;
-                if (CTRL.V == 1)
+                if (m_Cycles == 1)
                 { 
+                    STATUS.V = 1;
+                }
+                else if (m_Cycles == 16 && CTRL.V == 1 && STATUS.V == 1)
+                {
                     m_NMI?.Invoke();
                 }
             }
@@ -713,11 +727,6 @@ namespace NesLib.PPU
                 return;
             }
 
-            if (m_Cycles == 1)
-            {
-                STATUS.SetValue(0);
-            }
-
             if (m_Cycles == 0)
             {
                 //Idle
@@ -726,6 +735,7 @@ namespace NesLib.PPU
             {
                 if (m_Cycles == 1)
                 {
+                    STATUS.SetValue(0);
                     ResetSecondaryOAM();
                 }
 
@@ -904,26 +914,79 @@ namespace NesLib.PPU
             byte paletteBit1 = BitService.GetBit(ShiftRegister.TileHighByte, 15 - X);
             byte paletteBit0 = BitService.GetBit(ShiftRegister.TileLowByte, 15 - X);
             byte paletteIndex = (byte)((paletteBit3 << 3) | (paletteBit2 << 2) | (paletteBit1 << 1) | paletteBit0);
-            int value = m_SpriteData[x];
+            byte value = m_SpriteData[x];
+            byte realValue = (byte)(value & 0x3F);
+            byte backgroundColor = paletteIndex;
 
             if (value != 0)
             {
-                //如果最后位为0,表示不可视
-                if ((value & 0x1) != 0)
+                bool front = BitService.GetBit(value, 7) == 1;
+
+                if (front)
                 {
-                    m_Frame[y][x] = value;
+                    //背景前
+                    //如果精灵不透明显示精灵色，透明则显示背景色
+                    if (realValue %4 == 0)
+                    {
+                        m_Frame[y][x] = GetBackgroundColor(backgroundColor);
+                    }
+                    else
+                    {
+                        m_Frame[y][x] = GetSpriteColor(realValue);
+                    }
                 }
                 else
                 {
-                    m_Frame[y][x] = GetBackgroundColor(paletteIndex);
+                    //背景后
+                    //如果精灵透明则显示背景色
+                    //如果精灵不透明，1.如果背景透明则显示不透明的精灵色
+                    //               2.如果背景不透明则显示背景色
+
+                    if (realValue % 4 == 0)
+                    {
+                        m_Frame[y][x] = GetBackgroundColor(backgroundColor);
+                    }
+                    else
+                    {
+                        if (backgroundColor == 0)
+                        {
+                            m_Frame[y][x] = GetSpriteColor(realValue);
+                        }
+                        else
+                        {
+                            m_Frame[y][x] = GetBackgroundColor(backgroundColor);
+                        }
+                    }
+                    //}
+
+                    ////如果最后位为0,表示不可视
+                    //if ((value & 0x1) != 0)
+                    //{
+                    //    m_Frame[y][x] = value;
+                    //}
+                    //else
+                    //{
+                    //    m_Frame[y][x] = GetBackgroundColor(paletteIndex);
+                    //}
+
+
                 }
 
                 //如果倒数第二位为0，表示sprite 0
-                if (!m_Sprit0Hits && (value & 0x2) == 0)
+                //if (!m_Sprit0Hits && (value & 0x2) == 0)
+                //{
+                //    int transparentColor = Palette.GetRGBAColor(m_PPUBus.ReadByte(0x3F00));
+                //    int background = GetBackgroundColor(paletteIndex);
+                //    if (background != transparentColor && value != transparentColor)
+                //    {
+                //        STATUS.S = 1;
+                //        m_Sprit0Hits = true;
+                //    }
+                //}
+                bool isSprite0 = BitService.GetBit(value, 6) == 1;
+                if (!m_Sprit0Hits && isSprite0)
                 {
-                    int transparentColor = Palette.GetRGBAColor(m_PPUBus.ReadByte(0x3F00));
-                    int background = GetBackgroundColor(paletteIndex);
-                    if (background != transparentColor && value != transparentColor)
+                    if (backgroundColor != 0 && realValue % 4 != 0)
                     {
                         STATUS.S = 1;
                         m_Sprit0Hits = true;
@@ -931,8 +994,8 @@ namespace NesLib.PPU
                 }
             }
             else
-            { 
-                m_Frame[y][x] = GetBackgroundColor(paletteIndex);
+            {
+                m_Frame[y][x] = GetBackgroundColor(backgroundColor);
             }
         }
 
@@ -977,13 +1040,14 @@ namespace NesLib.PPU
 
         private void FetchSprite()
         {
-            int transparent = Palette.GetRGBAColor(m_PPUBus.ReadByte(0x3F00));
-
             Array.Clear(m_SpriteData, 0, m_SpriteData.Length);
             //8x8的
             for (int i = m_SecondaryOAMCount - 1; i >= 0; --i)
             {
                 byte oamIndex = m_SecondaryOAM[i];
+                if (oamIndex != 0)
+                { 
+                }
                 int block = oamIndex * 4;
                 int y = OAM[block];
                 int x = OAM[block + 3];
@@ -995,7 +1059,7 @@ namespace NesLib.PPU
 
                 offset += OAM[block + 1] * 16;
 
-                bool visible = BitService.GetBit(OAM[block + 2], 5) == 0;
+                bool front = BitService.GetBit(OAM[block + 2], 5) == 0; //是背景前还是背景后
                 byte horizentalFlip = BitService.GetBit(OAM[block + 2], 6);
                 byte verticalFlip = BitService.GetBit(OAM[block + 2], 7);
                 byte lowPatternData;
@@ -1027,29 +1091,48 @@ namespace NesLib.PPU
                         bit1 = BitService.GetBit(highPatternData, j);
                     }
                     int paletteOffset = highPalette | (bit1 << 1) | bit0;
-                    int color = GetSpriteColor(paletteOffset);
-                    if (color != transparent)
+                    //byte color = GetSpriteColor(paletteOffset);
+                    byte color = (byte)paletteOffset;
+                    if (color != 0)
                     {
-                        if (visible)
+                        if (front)
                         {
-                            m_SpriteData[x + 7 - j] = color;
+                            m_SpriteData[x + 7 - j] = (byte)(color | 0x80); //最高位 置1，paint的时候才知道是背景前还是背景后
                         }
                         else
                         {
-                            unchecked 
-                            {
-                                m_SpriteData[x + 7 - j] = (int)(color & 0xFFFFFFFE); //末尾为0
-                            }
+                            m_SpriteData[x + 7 - j] = color;
                         }
                     }
 
                     if (oamIndex == 0)
                     {
-                        unchecked
-                        { 
-                            m_SpriteData[x + 7 - j] &= (int)0xFFFFFFFD; //倒数第二位为1
-                        }
+                        m_SpriteData[x + 7 - j] |= 0x40; //倒数第2位置1，paint的时候才知道是sprint 0
                     }
+
+
+                    //if (color != transparent)
+                    //{
+                    //    if (front)
+                    //    {
+                    //        m_SpriteData[x + 7 - j] = color;
+                    //    }
+                    //    else
+                    //    {
+                    //        unchecked 
+                    //        {
+                    //            m_SpriteData[x + 7 - j] = (int)(color & 0xFFFFFFFE); //末尾为0
+                    //        }
+                    //    }
+                    //}
+
+                    //if (oamIndex == 0)
+                    //{
+                    //    unchecked
+                    //    { 
+                    //        m_SpriteData[x + 7 - j] &= (int)0xFFFFFFFD; //倒数第二位为1
+                    //    }
+                    //}
                 }
             }
         }
@@ -1168,17 +1251,19 @@ namespace NesLib.PPU
             return y * 8 + x;
         }
 
-        private int GetBackgroundColor(int paletteOffset)
+        private byte GetBackgroundColor(int paletteOffset)
         {
             byte offset = m_PPUBus.ReadByte((ushort)(0x3F00 + paletteOffset));
-            return Palette.GetRGBAColor(offset);
+            return offset;
+            //return Palette.GetRGBAColor(offset);
         }
 
-        private int GetSpriteColor(int paletteOffset)
+        private byte GetSpriteColor(int paletteOffset)
         {
             byte offset = m_PPUBus.ReadByte((ushort)(0x3F10 + paletteOffset));
-            int value = Palette.GetRGBAColor(offset);
-            return value;
+            return offset;
+            //int value = Palette.GetRGBAColor(offset);
+            //return value;
         }
 
         private int[][] HorizentalFlip(int[][] data)
