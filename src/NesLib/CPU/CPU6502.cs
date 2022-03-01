@@ -133,16 +133,16 @@ namespace NesLib.CPU
             AddToDictionary(TXA, 0x8A);
             AddToDictionary(TXS, 0x9A);
             AddToDictionary(TYA, 0x98);
-            AddToDictionary(UNOFFICAL_NOP, 0x80, 0x04, 0x44, 0x64, 0x0C, 0x14, 0x34, 0x54, 0x74, 0xD4, 0xF4, 0x1C, 0x3C, 0x5C, 0x7C, 0xDC, 0xFC, 0x89, 0x82, 0xC2, 0xE2, 0x1A, 0x3A, 0x5A, 0x7A, 0xDA, 0xFA);
-            AddToDictionary(UNOFFICAL_LAX, 0xA3, 0xA7, 0xAB, 0xAF, 0xB3, 0xB7, 0xBF);
-            AddToDictionary(UNOFFICAL_SAX, 0x83, 0x87, 0x8F, 0x97);
-            AddToDictionary(UNOFFICAL_SBC, 0xEB);
-            AddToDictionary(UNOFFICAL_DCP, 0xC3, 0xC7, 0xCF, 0xD3, 0xD7, 0xDB, 0xDF);
-            AddToDictionary(UNOFFICAL_ISCorISB, 0xE3, 0xE7, 0xEF, 0xF3, 0xF7, 0xFB, 0xFF);
-            AddToDictionary(UNOFFICAL_SLO, 0x03, 0x07, 0x0F, 0x13, 0x17, 0x1B, 0x1F);
-            AddToDictionary(UNOFFICAL_RLA, 0x23, 0x27, 0x2F, 0x33, 0x37, 0x3B, 0x3F);
-            AddToDictionary(UNOFFICAL_SRE, 0x43, 0x47, 0x4F, 0x53, 0x57, 0x5B, 0x5F);
-            AddToDictionary(UNOFFICAL_RRA, 0x63, 0x67, 0x6F, 0x73, 0x77, 0x7B, 0x7F);
+            AddToDictionary(UNOFFICIAL_NOP, 0x80, 0x04, 0x44, 0x64, 0x0C, 0x14, 0x34, 0x54, 0x74, 0xD4, 0xF4, 0x1C, 0x3C, 0x5C, 0x7C, 0xDC, 0xFC, 0x89, 0x82, 0xC2, 0xE2, 0x1A, 0x3A, 0x5A, 0x7A, 0xDA, 0xFA);
+            AddToDictionary(UNOFFICIAL_LAX, 0xA3, 0xA7, 0xAB, 0xAF, 0xB3, 0xB7, 0xBF);
+            AddToDictionary(UNOFFICIAL_SAX, 0x83, 0x87, 0x8F, 0x97);
+            AddToDictionary(UNOFFICIAL_SBC, 0xEB);
+            AddToDictionary(UNOFFICIAL_DCP, 0xC3, 0xC7, 0xCF, 0xD3, 0xD7, 0xDB, 0xDF);
+            AddToDictionary(UNOFFICIAL_ISCorISB, 0xE3, 0xE7, 0xEF, 0xF3, 0xF7, 0xFB, 0xFF);
+            AddToDictionary(UNOFFICIAL_SLO, 0x03, 0x07, 0x0F, 0x13, 0x17, 0x1B, 0x1F);
+            AddToDictionary(UNOFFICIAL_RLA, 0x23, 0x27, 0x2F, 0x33, 0x37, 0x3B, 0x3F);
+            AddToDictionary(UNOFFICIAL_SRE, 0x43, 0x47, 0x4F, 0x53, 0x57, 0x5B, 0x5F);
+            AddToDictionary(UNOFFICIAL_RRA, 0x63, 0x67, 0x6F, 0x73, 0x77, 0x7B, 0x7F);
         }
 
         private void AddToDictionary(Action<byte> action, params int[] opCodes)
@@ -2220,7 +2220,7 @@ namespace NesLib.CPU
         /// do nothing
         /// </summary>
         /// <param name="opCode"></param>
-        private void UNOFFICAL_NOP(byte opCode)
+        private void UNOFFICIAL_NOP(byte opCode)
         {
             //参考*3)，指令时间参考nestest.log
             if (opCode == 0x80)
@@ -2276,7 +2276,7 @@ namespace NesLib.CPU
         /// Shortcut for LDA value then TAX.参考4*)
         /// </summary>
         /// <param name="opCode"></param>
-        private void UNOFFICAL_LAX(byte opCode)
+        private void UNOFFICIAL_LAX(byte opCode)
         {
             long tmpCycle = Cycles; //因为这里的cycle不是简单的指令里面的相加，所以这里重新计算
 
@@ -2335,7 +2335,7 @@ namespace NesLib.CPU
         /// Stores the bitwise AND of A and X. As with STA and STX, no flags are affected.
         /// </summary>
         /// <param name="opCode"></param>
-        private void UNOFFICAL_SAX(byte opCode)
+        private void UNOFFICIAL_SAX(byte opCode)
         {
             ushort addr;
             if (opCode == 0x83)
@@ -2370,7 +2370,7 @@ namespace NesLib.CPU
         /// 与SBC immediate完全一致
         /// </summary>
         /// <param name="opCode"></param>
-        private void UNOFFICAL_SBC(byte opCode)
+        private void UNOFFICIAL_SBC(byte opCode)
         {
             if (opCode == 0xEB)
             {
@@ -2387,7 +2387,7 @@ namespace NesLib.CPU
         /// LDA #$FF followed by DCP can be used to check if the decrement underflows, which is useful for multi-byte decrements.
         /// </summary>
         /// <param name="opCode"></param>
-        private void UNOFFICAL_DCP(byte opCode)
+        private void UNOFFICIAL_DCP(byte opCode)
         {
             ushort addr;
             long tmpCycle = Cycles;
@@ -2450,7 +2450,7 @@ namespace NesLib.CPU
         /// Equivalent to INC value then SBC value, except supporting more addressing modes.
         /// </summary>
         /// <param name="opCode"></param>
-        private void UNOFFICAL_ISCorISB(byte opCode)
+        private void UNOFFICIAL_ISCorISB(byte opCode)
         {
             ushort addr;
             long tmpCycle = Cycles;
@@ -2516,7 +2516,7 @@ namespace NesLib.CPU
         /// Equivalent to ASL value then ORA value, except supporting more addressing modes. LDA #0 followed by SLO is an efficient way to shift a variable while also loading it in A.
         /// </summary>
         /// <param name="opCode"></param>
-        private void UNOFFICAL_SLO(byte opCode)
+        private void UNOFFICIAL_SLO(byte opCode)
         {
             ushort addr;
             long tmpCycle = Cycles;
@@ -2583,7 +2583,7 @@ namespace NesLib.CPU
         /// Equivalent to ROL value then AND value, except supporting more addressing modes. LDA #$FF followed by RLA is an efficient way to rotate a variable while also loading it in A.
         /// </summary>
         /// <param name="opCode"></param>
-        private void UNOFFICAL_RLA(byte opCode)
+        private void UNOFFICIAL_RLA(byte opCode)
         {
             ushort addr;
             long tmpCycle = Cycles;
@@ -2653,7 +2653,7 @@ namespace NesLib.CPU
         /// Equivalent to LSR value then EOR value, except supporting more addressing modes. LDA #0 followed by SRE is an efficient way to shift a variable while also loading it in A.
         /// </summary>
         /// <param name="opCode"></param>
-        private void UNOFFICAL_SRE(byte opCode)
+        private void UNOFFICIAL_SRE(byte opCode)
         {
             ushort addr;
             long tmpCycle = Cycles;
@@ -2718,7 +2718,7 @@ namespace NesLib.CPU
         /// Equivalent to ROR value then ADC value, except supporting more addressing modes. Essentially this computes A + value / 2, where value is 9-bit and the division is rounded up.
         /// </summary>
         /// <param name="opCode"></param>
-        private void UNOFFICAL_RRA(byte opCode)
+        private void UNOFFICIAL_RRA(byte opCode)
         {
             ushort addr;
             long tmpCycle = Cycles;
