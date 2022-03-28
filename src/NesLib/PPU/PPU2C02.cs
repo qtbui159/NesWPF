@@ -968,16 +968,20 @@ namespace NesLib.PPU
             }
 
             int spriteHeight = CTRL.H == 1 ? 16 : 8;
-            spriteHeight -= 1;
 
             for (int i = 0; i < OAM.Length / 4; ++i)
             {
                 byte y = OAM[4 * i];
+                byte x = OAM[4 * i + 3];
                 if (y >= 0xEF)
                 {
                     continue;
                 }
-                if (y <= m_Scanline && m_Scanline <= y + spriteHeight)
+                if (MASK.M == 0 && x < 8)
+                {
+                    continue;
+                }
+                if (y <= m_Scanline && m_Scanline < y + spriteHeight)
                 {
                     m_SecondaryOAM[m_SecondaryOAMCount++] = (byte)i;
 
