@@ -261,7 +261,7 @@ namespace NesLib.Bus
                     ushort startAddr = (ushort)(data << 8);
                     ushort endAddr = (ushort)(startAddr | 0xFF);
                     List<byte> dataList = new List<byte>();
-                    for (ushort i = startAddr; i < endAddr; ++i)
+                    for (ushort i = startAddr; i <= endAddr; ++i)
                     {
                         byte b = ReadByte(i);
                         dataList.Add(b);
