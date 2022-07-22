@@ -41,6 +41,16 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="APU\APU2A03.cs" />
+    <Compile Include="APU\DMC.cs" />
+    <Compile Include="APU\FrameCounter.cs" />
+    <Compile Include="APU\Mixer.cs" />
+    <Compile Include="APU\Noise.cs" />
+    <Compile Include="APU\Pulse1.cs" />
+    <Compile Include="APU\Pulse2.cs" />
+    <Compile Include="APU\PulseBase.cs" />
+    <Compile Include="APU\StatusRegister.cs" />
+    <Compile Include="APU\Triangle.cs" />
     <Compile Include="Bus\CPUBus.cs" />
     <Compile Include="Bus\ICPUBus.cs" />
     <Compile Include="Bus\IPPUBus.cs" />
